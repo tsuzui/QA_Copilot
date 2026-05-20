@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef, Suspense } from 'react';
 import { 
   FileText, 
   Send, 
@@ -29,10 +29,16 @@ import {
   FileBox,
   PieChart,
   CopyPlus,
-  PlusCircle
+  PlusCircle,
+  Home,
+  Bug,
+  Shield,
+  LayoutDashboard
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { GoogleGenAI, Type } from "@google/genai";
+import { Canvas, useFrame } from '@react-three/fiber';
+import { Float, MeshDistortMaterial, Sphere, MeshWobbleMaterial, OrbitControls, Stars, PerspectiveCamera } from '@react-three/drei';
+import * as THREE from 'three';
 import { saveAs } from 'file-saver';
 import { useDropzone } from 'react-dropzone';
 import { Toaster, toast } from 'sonner';
@@ -49,6 +55,155 @@ const FILTERS: (TestCaseType | 'All')[] = ['All', 'Positive', 'Negative', 'Edge 
 const LANGUAGES: LanguageType[] = ['Indonesia', 'English'];
 
 const PREVIOUS_SESSIONS_KEY = 'qa_copilot_history';
+
+// 3D Components for Landing Page - QA Theme
+const DataParticle = ({ position, color }: any) => {
+  return (
+    <Float speed={2} rotationIntensity={1} floatIntensity={1}>
+      <mesh position={position}>
+        <boxGeometry args={[0.1, 0.1, 0.1]} />
+        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={2} />
+      </mesh>
+    </Float>
+  );
+};
+
+const AppLogo = ({ size = "md", className = "", theme = "dark" }: { size?: "sm" | "md" | "lg", className?: string, theme?: "light" | "dark" }) => {
+  const dimensions = {
+    sm: { box: "w-8 h-8", icon: "w-5 h-5", text: "text-lg" },
+    md: { box: "w-10 h-10", icon: "w-6 h-6", text: "text-xl" },
+    lg: { box: "w-32 h-32", icon: "w-20 h-20", text: "text-4xl" }
+  };
+
+  const d = dimensions[size];
+  const isDark = theme === "dark";
+
+  return (
+    <div className={`flex items-center gap-3 ${className}`}>
+      <div className={`${d.box} relative flex-shrink-0`}>
+        {/* The Blue Container */}
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl shadow-lg transform rotate-[-2deg]" />
+        
+        {/* The Document / Nodes Section */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <svg viewBox="0 0 24 24" className={`${d.icon} text-white fill-none stroke-current stroke-2`}>
+             {/* Document Body */}
+             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" className="fill-white/10" />
+             <polyline points="14 2 14 8 20 8" />
+             {/* Scanning Nodes on the left */}
+             <circle cx="2" cy="8" r="1.5" className="fill-blue-400 stroke-none" />
+             <circle cx="2" cy="12" r="1.5" className="fill-blue-400 stroke-none" />
+             <circle cx="2" cy="16" r="1.5" className="fill-blue-400 stroke-none" />
+             <line x1="2" y1="8" x2="6" y2="8" className="stroke-blue-400" />
+             <line x1="2" y1="12" x2="6" y2="12" className="stroke-blue-400" />
+             <line x1="2" y1="16" x2="6" y2="16" className="stroke-blue-400" />
+             {/* Checkmark */}
+             <path d="M9 15l2 2 4-4" className="stroke-cyan-400 stroke-[3px] drop-shadow-sm" />
+          </svg>
+        </div>
+      </div>
+
+      {size !== "lg" && (
+        <div className="flex flex-col">
+          <h1 className={`${d.text} font-black tracking-tighter leading-none flex items-center`}>
+            <span className="text-blue-600">QA</span>
+            <span className={cn("ml-1.5 relative", isDark ? "text-blue-50" : "text-slate-900")}>
+              Copilot
+              <span className="absolute -top-1 -right-2 transform scale-75">
+                <svg viewBox="0 0 24 24" className="w-4 h-4 text-cyan-400 fill-cyan-400 animate-pulse">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14l-5-4.87 6.91-1.01L12 2z" />
+                </svg>
+              </span>
+            </span>
+          </h1>
+          {size === "md" && <p className={cn("text-[9px] uppercase tracking-widest font-black mt-1", isDark ? "text-slate-400" : "text-slate-500")}>Platform v2.2</p>}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const QAScanner = () => {
+  const groupRef = useRef<THREE.Group>(null);
+  const ringRef = useRef<THREE.Mesh>(null);
+  
+  useFrame((state) => {
+    const t = state.clock.elapsedTime;
+    if (groupRef.current) {
+      groupRef.current.rotation.y = t * 0.2;
+    }
+    if (ringRef.current) {
+      ringRef.current.position.y = Math.sin(t * 1.5) * 5;
+      ringRef.current.rotation.x = Math.PI / 2;
+    }
+  });
+
+  return (
+    <group>
+      <group ref={groupRef}>
+        {[...Array(30)].map((_, i) => (
+          <mesh key={i} position={[(Math.random() - 0.5) * 10, (Math.random() - 0.5) * 10, (Math.random() - 0.5) * 10]}>
+            <boxGeometry args={[0.4, 0.4, 0.4]} />
+            <meshStandardMaterial color="#3B82F6" emissive="#3B82F6" emissiveIntensity={2} />
+          </mesh>
+        ))}
+      </group>
+
+      {/* Matrix-like Scanning Lines */}
+      {[...Array(5)].map((_, i) => (
+        <ScanningLines key={i} delay={i * 0.5} />
+      ))}
+
+      {[...Array(50)].map((_, i) => (
+        <DataParticle 
+          key={i} 
+          position={[(Math.random() - 0.5) * 30, (Math.random() - 0.5) * 30, (Math.random() - 0.5) * 30]} 
+          color={i % 3 === 0 ? "#60A5FA" : i % 3 === 1 ? "#34D399" : "#F87171"}
+        />
+      ))}
+    </group>
+  );
+};
+
+const ScanningLines = ({ delay = 0 }) => {
+  const ref = useRef<THREE.Mesh>(null);
+  useFrame((state) => {
+    const t = (state.clock.elapsedTime + delay) % 4;
+    if (ref.current) {
+      ref.current.position.y = 8 - (t * 4);
+      if (ref.current.material && (ref.current.material as THREE.Material).opacity !== undefined) {
+        (ref.current.material as THREE.Material).opacity = Math.sin(t * Math.PI / 4) * 0.5;
+      }
+    }
+  });
+
+  return (
+    <mesh ref={ref} rotation={[-Math.PI / 2, 0, 0]}>
+      <planeGeometry args={[30, 0.05]} />
+      <meshBasicMaterial color="#3B82F6" transparent opacity={0.5} />
+    </mesh>
+  );
+};
+
+const Hero3DScene = () => {
+  return (
+    <div className="fixed inset-0 z-[-1] pointer-events-none bg-[#020617]">
+      <Canvas camera={{ position: [0, 0, 20], fov: 45 }}>
+        <Suspense fallback={null}>
+          <color attach="background" args={["#020617"]} />
+          <ambientLight intensity={0.5} />
+          <pointLight position={[10, 10, 10]} intensity={5} color="#3B82F6" />
+          <pointLight position={[-10, -10, -10]} intensity={3} color="#10B981" />
+          <QAScanner />
+          <Stars radius={100} depth={50} count={2000} factor={4} saturation={0} fade speed={1} />
+        </Suspense>
+      </Canvas>
+      <div className="absolute inset-0 bg-[#020617]/50 backdrop-blur-[1px]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,#020617_100%)] opacity-80" />
+    </div>
+  );
+};
+
 
 function calculateCoverageRatio(fullCoverage: any[], partialCoverage: any[], missingCoverage: any[]) {
   const full = Array.isArray(fullCoverage) ? fullCoverage.length : 0;
@@ -165,6 +320,17 @@ export default function App() {
   // Feature Selection
   const [activeFeature, setActiveFeature] = useState<'generator' | 'coverage'>('generator');
   
+  // Navigation state
+  const [appPage, setAppPage] = useState<'home' | 'generator' | 'coverage' | 'bug_report'>('home');
+  
+  useEffect(() => {
+    if (appPage === 'home') {
+      document.body.style.backgroundColor = '#020617';
+    } else {
+      document.body.style.backgroundColor = '#f8fafc';
+    }
+  }, [appPage]);
+  
   // Generator Feature State
   const [inputMode, setInputMode] = useState<'manual' | 'upload'>('manual');
   const [prdText, setPrdText] = useState('');
@@ -177,6 +343,12 @@ export default function App() {
   const [results, setResults] = useState<TestCase[]>([]);
   const [generatorCoverage, setGeneratorCoverage] = useState<CoverageResult | null>(null);
   const [suggestedMissingTestCases, setSuggestedMissingTestCases] = useState<TestCase[]>([]);
+  
+  const [generatorImages, setGeneratorImages] = useState<{
+    name: string,
+    base64: string,
+    mimeType: string
+  }[]>([]);
   
   // Checker Feature State
   const [checkerPrdFile, setCheckerPrdFile] = useState<{ 
@@ -207,7 +379,7 @@ export default function App() {
   const [regeneratingIds, setRegeneratingIds] = useState<Set<string>>(new Set());
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editBuffer, setEditBuffer] = useState<TestCase | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [resultsPage, setResultsPage] = useState(1);
   const [showHistory, setShowHistory] = useState(false);
   const [inputError, setInputError] = useState<string | null>(null);
   const [historyList, setHistoryList] = useState<HistoryItem[]>(() => {
@@ -224,6 +396,15 @@ export default function App() {
     title: '',
     message: '',
     onConfirm: () => {}
+  });
+  const [exportModal, setExportModal] = useState<{
+    show: boolean;
+    format: 'csv' | 'excel';
+    filename: string;
+  }>({
+    show: false,
+    format: 'csv',
+    filename: ''
   });
   const pageSize = 10;
   const handleInputModeChange = (mode: 'manual' | 'upload') => {
@@ -276,6 +457,24 @@ export default function App() {
     };
   };
 
+  const processImage = async (file: File) => {
+    const reader = new FileReader();
+    const base64Promise = new Promise<string>((resolve) => {
+      reader.onload = () => {
+        const result = reader.result as string;
+        resolve(result.split(',')[1]); 
+      };
+      reader.readAsDataURL(file);
+    });
+
+    const base64 = await base64Promise;
+    return {
+      name: file.name,
+      base64,
+      mimeType: file.type
+    };
+  };
+
   const onDropGeneratorPrd = useCallback(async (acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
     if (!file) return;
@@ -290,6 +489,23 @@ export default function App() {
       setLoading(false);
     }
   }, []);
+
+  const onDropGeneratorImages = useCallback(async (acceptedFiles: File[]) => {
+    setLoading(true);
+    try {
+      const processedArray = await Promise.all(acceptedFiles.map(file => processImage(file)));
+      setGeneratorImages(prev => [...prev, ...processedArray]);
+      toast.success(`${acceptedFiles.length} screenshot berhasil diunggah.`);
+    } catch (error) {
+      toast.error("Gagal memproses gambar.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const removeGeneratorImage = (index: number) => {
+    setGeneratorImages(prev => prev.filter((_, i) => i !== index));
+  };
 
   const onDropCheckerPrd = useCallback(async (acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
@@ -326,9 +542,21 @@ export default function App() {
     accept: {
       'application/pdf': ['.pdf'],
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
-      'text/plain': ['.txt']
+      'text/plain': ['.txt'],
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+      'application/vnd.ms-excel': ['.xls']
     },
-    multiple: false
+    multiple: false,
+    disabled: results.length > 0 || loading
+  });
+
+  const imageDropzone = useDropzone({
+    onDrop: onDropGeneratorImages,
+    accept: {
+      'image/*': ['.png', '.jpg', '.jpeg', '.webp']
+    },
+    multiple: true,
+    disabled: results.length > 0 || loading
   });
 
   const checkerPrdDropzone = useDropzone({
@@ -336,9 +564,12 @@ export default function App() {
     accept: {
       'application/pdf': ['.pdf'],
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
-      'text/plain': ['.txt']
+      'text/plain': ['.txt'],
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+      'application/vnd.ms-excel': ['.xls']
     },
-    multiple: false
+    multiple: false,
+    disabled: loading
   });
 
   const checkerTcDropzone = useDropzone({
@@ -350,10 +581,35 @@ export default function App() {
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
       'application/vnd.ms-excel': ['.xls']
     },
-    multiple: false
+    multiple: false,
+    disabled: loading
   });
 
-  // Gemini Setup
+  // Gemini Setup (Server Side Proxy)
+  const callGemini = async (payload: any) => {
+    try {
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!response.ok) {
+        const err = await response.json();
+        let errorMsg = err.error || 'Gagal memanggil AI';
+        if (errorMsg.includes("503") || errorMsg.includes("500") || errorMsg.includes("high demand") || errorMsg.includes("busy")) {
+          errorMsg = "AI sedang mengalami gangguan sementara atau beban tinggi (Internal Server Error/High Demand). Kami sudah mencoba otomatis di background, silakan tunggu sejenak dan coba lagi.";
+        }
+        throw new Error(errorMsg);
+      }
+      return response.json();
+    } catch (error: any) {
+      if (error.message.includes("Failed to fetch")) {
+        throw new Error("Koneksi ke server terputus. Pastikan internet Anda stabil.");
+      }
+      throw error;
+    }
+  };
+
   const generateTestCases = async () => {
     const hasInput = inputMode === 'manual' ? prdText.trim() : generatorFile;
     if (!hasInput) return;
@@ -363,18 +619,22 @@ export default function App() {
     const inputText = inputMode === 'manual' ? prdText : (generatorFile?.rawText || "");
     if (inputText) {
       const wordCount = inputText.trim().split(/\s+/).filter(w => w.length > 0).length;
-      if (wordCount < 30) {
-        setInputError("Deskripsi terlalu singkat. Tambahkan detail requirement (min. 30 kata) untuk hasil yang akurat.");
+      if (wordCount < 15) {
+        setInputError("Deskrip terlalu singkat. Tambahkan detail requirement (min. 15 kata) untuk hasil yang akurat.");
         return;
       }
+    }
+
+    const requiredFields = ['id_number', 'title', 'type', 'priority', 'preconditions', 'steps', 'expectedResult'];
+    if (template === 'Gherkin') {
+       // specific fields for gherkin in the schema
     }
 
     setLoading(true);
     setGeneratorCoverage(null);
     setResults([]);
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-      
+      let contents: any[] = [];
       let parts: any[] = [];
       if (inputMode === 'manual') {
         parts.push({ text: `PRD/Fitur:\n${prdText}` });
@@ -388,157 +648,95 @@ export default function App() {
           });
         } else if (generatorFile.rawText) {
           parts.push({ text: `PRD Content from File (${generatorFile.name}):\n${generatorFile.rawText}` });
-        } else {
-          parts.push({ text: `Analyze the attached file content named ${generatorFile.name}` });
         }
       }
 
-      const genPrompt = `Generate as many test cases as possible for all requirements found in this document. 
-For EACH requirement, generate positive, negative, and edge cases where relevant. Do not limit the count.
+      if (generatorImages.length > 0) {
+        generatorImages.forEach(img => {
+          parts.push({ inlineData: { data: img.base64, mimeType: img.mimeType } });
+        });
+        parts.push({ text: "Gunakan screenshot UI untuk test case yang lebih detail." });
+      }
 
-ANTI-HALLUCINATION INSTRUCTIONS:
-- Hanya generate test case berdasarkan requirement yang EKSPLISIT disebutkan dalam input. 
-- Jangan tambahkan test case dari pengetahuan umum atau asumsi tentang fitur tersebut.
+      const genPrompt = `Sebagai Senior Lead QA Engineer, Anda WAJIB menjamin TEST COVERAGE MINIMAL 85% terhadap PRD ini pada percobaan pertama. Jangan membuat hanya sedikit test case. Anda harus secara komprehensif menguji seluruh elemen yang ada dalam PRD.
 
-FOR EVERY TEST CASE, you MUST consider and generate:
-1. Positive case: Valid variations.
-2. Negative Cases (MANDATORY):
-   - Invalid Input: Formatting errors, empty fields, data that exceeds limits.
-   - Validation: Duplicate data, data that doesn't exist, or incorrect data types.
-   - Permissions: Accessing features without proper authorization.
-   - Logic: Conditions where a process should fail.
-3. Edge case: Boundary values, special characters, extreme conditions.
+PROSES WAJIB:
+1. IDENTIFIKASI SEMUA ELEMEN PERSYARATAN: Ekstrak secara kritis setiap fitur utama, user flow, aturan bisnis (business rules), validation rules, kontrol akses/permission, error handling, edge cases, acceptance criteria, dan perilaku sistem yang dapat diuji dari PRD. Abaikan saja bagian heading non-testable seperti Purpose, Goals, Objectives, Overview, Background, Scope, Introduction, Summary.
+2. DUKUNG COVERAGE MAKSIMAL (MINIMAL 85% COVERAGE): Buat minimal 1 test case untuk setiap requirement utama yang valid. Jika suatu requirement bersifat kompleks, buatlah beberapa skenario terpisah.
+3. KOSONGKAN BATASAN JUMLAH: Buat jumlah test case yang memadai (misal 20 hingga 45 test case jika dokumen panjang) untuk menutupi seluruh aspek PRD, termasuk skenario positif, skenario negatif, dan edge case.
+4. TEST DESIGN STRATEGY: Gunakan Boundary Value Analysis dan Equivalence Partitioning untuk input validation. Masukkan Negative flow untuk setiap Error Handling yang disebutkan di PRD.
+5. SPESIFIK & REALISTIK: Gunakan data yang realistis dan relevan dengan konteks PRD.
 
-STRICT INSTRUCTIONS:
-- Detection: Choose a 3-6 char uppercase prefix (e.g., AUTH, PAY).
-- Naming: Varied action verbs (Avoid "Verifikasi").
-- Gherkin: given, when, then lowercase fields (1-2 sentences), no N/A.
+KONFIGURASI:
+- Template: ${template}
+- Bahasa: ${language}
+- Field 'coveredRequirement' WAJIB diisi dengan nama/kutipan requirement spesifik singkat dari PRD yang dicakup (misal: "AC 1: Login Valid" atau "Validation Rule: Email Format").
 
-Output Template: ${template}
-Output Language: ${language}
-Output in valid JSON format.`;
+FORMAT OUTPUT: JSON sesuai schema dengan daftar test case yang komprehensif agar coverage mencapai 85%+ langsung di percobaan pertama.`;
 
-      // Retry mechanism for Resource Exhausted (429)
-      let result;
-      let lastError;
-      for (let attempt = 0; attempt < 2; attempt++) {
-        try {
-          result = await ai.models.generateContent({
-            model: MODAL_NAME,
-            contents: [{ role: 'user', parts: [...parts, { text: genPrompt }] }],
-            config: {
-              maxOutputTokens: 8192,
-              systemInstruction: `You are a senior QA engineer. Generate exhaustive test cases for all requirements in the document. 
-              STRICT RULES:
-              - Hanya generate test case berdasarkan requirement yang EKSPLISIT disebutkan dalam input. Jangan tambahkan test case dari pengetahuan umum atau asumsi tentang fitur tersebut.
-              - DO NOT skip negative/edge cases.
-              - Cover invalid formats, empty data, duplicate data, limits, and permission/access errors.
-              - Use varied action verbs for titles.
-              - For Gherkin, keep given, when, and then (lowercase) fields short, strictly descriptive, no N/A. Output in ${language}.`,
-              responseMimeType: "application/json",
-              responseSchema: {
-                type: Type.OBJECT,
-                properties: {
-                  prefix: { type: Type.STRING },
-                  testCases: {
-                    type: Type.ARRAY,
-                    items: {
-                      type: Type.OBJECT,
-                      properties: {
-                        id_number: { type: Type.STRING },
-                        title: { type: Type.STRING },
-                        type: { type: Type.STRING, enum: ['Positive', 'Negative', 'Edge Case'] },
-                        priority: { type: Type.STRING, enum: ['High', 'Medium', 'Low'] },
-                        preconditions: { type: Type.STRING },
-                        steps: { type: Type.ARRAY, items: { type: Type.STRING } },
-                        expectedResult: { type: Type.STRING },
-                        given: { type: Type.STRING },
-                        when: { type: Type.STRING },
-                        then: { type: Type.STRING },
-                      },
-                      required: ['id_number', 'title', 'type', 'priority', 'steps', 'expectedResult', 'given', 'when', 'then']
-                    }
+      parts.push({ text: genPrompt });
+      contents.push({ role: 'user', parts });
+
+      const resultData = await callGemini({
+        contents,
+        modelConfig: {
+          responseSchema: {
+            type: "OBJECT",
+            properties: {
+              prefix: { type: "STRING" },
+              testCases: {
+                type: "ARRAY",
+                items: {
+                  type: "OBJECT",
+                  properties: {
+                    id_number: { type: "STRING" },
+                    title: { type: "STRING" },
+                    type: { type: "STRING", enum: ['Positive', 'Negative', 'Edge Case'] },
+                    priority: { type: "STRING", enum: ['High', 'Medium', 'Low'] },
+                    preconditions: { type: "STRING" },
+                    steps: { type: "ARRAY", items: { type: "STRING" } },
+                    expectedResult: { type: "STRING" },
+                    coveredRequirement: { type: "STRING" },
+                    given: { type: "STRING" },
+                    when: { type: "STRING" },
+                    then: { type: "STRING" },
                   }
-                },
-                required: ['prefix', 'testCases']
+                }
               }
-            },
-          });
-          break; // Success
-        } catch (err: any) {
-          lastError = err;
-          const errMsg = err.message || "";
-          if ((errMsg.includes("429") || errMsg.includes("RESOURCE_EXHAUSTED") || errMsg.includes("quota")) && attempt < 1) {
-            console.warn(`Quota hit, retrying in 5s... (Attempt ${attempt + 1})`);
-            await new Promise(r => setTimeout(r, 5000));
-            continue;
-          }
-          throw err;
-        }
-      }
-
-      if (!result) throw lastError;
-
-      const textOutput = result.text;
-      if (textOutput) {
-        let parsed;
-        try {
-          parsed = JSON.parse(textOutput);
-        } catch (e) {
-          console.warn("Initial JSON parse failed, attempting repair...", e);
-          let repaired = textOutput.trim();
-          if (!repaired.endsWith('}')) {
-            if (repaired.includes('"testCases": [')) {
-              const lastObjectEnd = repaired.lastIndexOf('}');
-              if (lastObjectEnd !== -1) {
-                repaired = repaired.substring(0, lastObjectEnd + 1) + ']}';
-                parsed = JSON.parse(repaired);
-              } else {
-                throw new Error("Output was severely truncated.");
-              }
-            } else {
-              throw e;
             }
-          } else {
-            throw e;
           }
-        }
+        },
+        systemInstruction: "You are a senior Lead QA Engineer specializing in exhaustive test design and requirement traceability."
+      });
 
-        const prefix = parsed.prefix || 'TC';
-        const testCases: any[] = parsed.testCases || [];
-        const convertedResults: TestCase[] = testCases.map((tc, idx) => ({
-          ...tc,
-          source: 'generated',
-          id: `TC-${prefix}-${String(idx + 1).padStart(3, '0')}`
-        }));
-        setResults(convertedResults);
-        setSuggestedMissingTestCases([]);
-        setActiveResultsTemplate(template);
-        setViewMode('results');
-        setGeneratorCoverage(null);
-        toast.success(`Berhasil generate ${convertedResults.length} test cases!`);
+      const parsed = JSON.parse(resultData.text);
+      const prefix = parsed.prefix || 'TC';
+      const testCases: any[] = parsed.testCases || [];
+      const convertedResults: TestCase[] = testCases.map((tc, idx) => ({
+        ...tc,
+        source: 'generated',
+        id: `TC-${prefix}-${String(idx + 1).padStart(3, '0')}`
+      }));
+      setResults(convertedResults);
+      setSuggestedMissingTestCases([]);
+      setActiveResultsTemplate(template);
+      setViewMode('results');
+      toast.success(`Berhasil generate ${convertedResults.length} test cases!`);
 
-        // Save to History
-        const newHistory: HistoryItem = {
-          id: Math.random().toString(36).substr(2, 9),
-          title: (inputMode === 'manual' ? prdText.substring(0, 30) : generatorFile?.name) || 'Unnamed Session',
-          timestamp: Date.now(),
-          template,
-          language,
-          testCases: convertedResults
-        };
-        const updatedHistory = [newHistory, ...historyList].slice(0, 20);
-        setHistoryList(updatedHistory);
-        localStorage.setItem(PREVIOUS_SESSIONS_KEY, JSON.stringify(updatedHistory));
-      }
+      // Save to History
+      const newHistory: HistoryItem = {
+        id: Math.random().toString(36).substr(2, 9),
+        title: (inputMode === 'manual' ? prdText.substring(0, 30) : generatorFile?.name) || 'Unnamed Session',
+        timestamp: Date.now(),
+        template,
+        language,
+        testCases: convertedResults
+      };
+      const updatedHistory = [newHistory, ...historyList].slice(0, 20);
+      setHistoryList(updatedHistory);
+      localStorage.setItem(PREVIOUS_SESSIONS_KEY, JSON.stringify(updatedHistory));
     } catch (error: any) {
-      console.error("Generation failed:", error);
-      let msg = error.message || "Gagal melakukan generate.";
-      if (msg.includes("429") || msg.includes("RESOURCE_EXHAUSTED") || msg.toLowerCase().includes("quota")) {
-        toast.error("Kuota API Gemini Habis. Harap tunggu beberapa menit.");
-      } else {
-        toast.error("Terjadi Kesalahan: " + msg);
-      }
+      toast.error("Generation failed: " + error.message);
     } finally {
       setLoading(false);
     }
@@ -557,8 +755,7 @@ Output in valid JSON format.`;
     
     setIsCheckingCoverage(true);
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-      
+      let contents: any[] = [];
       let parts: any[] = [];
       
       // Add PRD
@@ -572,127 +769,85 @@ Output in valid JSON format.`;
       if (isChecker && checkerTestCaseFile) {
         if (checkerTestCaseFile.mimeType === 'application/pdf') {
           parts.push({ inlineData: { data: checkerTestCaseFile.base64, mimeType: checkerTestCaseFile.mimeType } });
-          parts.push({ text: `Analyze the test cases in the uploaded file named ${checkerTestCaseFile.name} against the PRD.` });
         } else if (checkerTestCaseFile.rawText) {
           parts.push({ text: `Existing Test Cases from File (${checkerTestCaseFile.name}):\n${checkerTestCaseFile.rawText}` });
-        } else {
-          parts.push({ text: `Analyze the test cases in the uploaded file named ${checkerTestCaseFile.name} against the PRD.` });
         }
       } else if (sourceResults) {
-        parts.push({ text: `Daftar Test Cases untuk Pencocokan Coverage:\n${sourceResults.map(tc => `[ID: ${tc.id}] Title: ${tc.title}, Expected: ${tc.expectedResult}`).join('\n')}` });
+        parts.push({ text: `Daftar Test Cases untuk Pencocokan Coverage:\n${sourceResults.map(tc => `[ID: ${tc.id}] Title: ${tc.title}, Requirement: ${tc.coveredRequirement || 'N/A'}, Expected: ${tc.expectedResult}`).join('\n')}` });
       }
 
-      const prompt = `Analisis dokumen PRD dan daftar test case yang ada menggunakan SEMANTIC MATCHING.
-Tugas Anda adalah memetakan requirement testable dari PRD ke test case yang tersedia.
+      const prompt = `Analyze PRD coverage gaps. 
+Lakukan evaluasi dengan SEMANTIC MATCHING yang adil, cerdas, dan realistis antara konten PRD dan daftar test case yang disediakan.
+Gunakan field 'coveredRequirement' dan deskripsi/title/expectedResult di dalam test case untuk melakukan pemetaan.
 
-DEFINISI REQUIREMENT (WAJIB TESTABLE):
-- HANYA ekstrak requirement yang bisa diuji secara teknis.
-- Termasuk: Fitur spesifik, business rules, validasi input, permissions, user actions, system behavior, error handling, dan acceptance criteria.
-- Satu requirement besar bisa dicakup oleh beberapa test case kecil. Jika gabungan test case tersebut mencakup requirement besar, anggap FULLY COVERED.
+Aturan Klasifikasi:
+1. Full Coverage: Berikan klasifikasi ini jika requirement utama atau aturan bisnis dari PRD sudah dicakup oleh setidaknya satu test case (atau kombinasi positive-flow & validation flow). Jika test case dari requirement tersebut sudah menguji fungsionalitas intinya, maka requirement tersebut sudah dianggap LULUS coverage sepenuhnya.
+2. Partial Coverage: Gunakan klasifikasi ini HANYA JIKA fungsionalitas kunci diuji tetapi ada edge case kritis atau skenario negatif vital yang terlewatkan.
+3. Missing: Gunakan klasifikasi ini HANYA JIKA requirement dari PRD sama sekali tidak memiliki test case yang mengujinya baik secara langsung maupun tidak langsung.
 
-APA YANG HARUS DIABAIKAN (DILARANG MASUK LIST):
-- Heading/Section Title (contoh: "Purpose", "Goals", "Objectives", "Overview", "Background", "Scope", "Introduction", "Summary").
+PENTING: Jangan terlalu kaku atau pedantis. Jika fungsionalitas inti dari suatu requirement PRD sudah diuji, tandai sebagai Full Coverage agar nilai analisis coverage mencerminkan kondisi lapangan yang realistis (menargetkan 80-95% coverage bila test cases memang komprehensif). Abaikan semua bagian non-testable PRD seperti Purpose, Goals, Overview, Background, Scope, Introduction, Summary.
 
-ANTI-HALLUCINATION & COVERAGE RULES:
-- FULL COVERED: Requirement terpenuhi sepenuhnya oleh satu atau lebih test case.
-- PARTIALLY COVERED: Baru sebagian aspek requirement yang teruji, atau butuh skenario Negative/Edge Case tambahan.
-- MISSING: Benar-benar tidak ada test case relevan.
+Return JSON format.`;
+      parts.push({ text: prompt });
+      contents.push({ role: 'user', parts });
 
-Return JSON dengan format:
-{
-  "fullCoverage": [
-    { "requirement": "...", "matchedTestCaseIds": ["ID-1", "ID-2"], "reason": "..." }
-  ],
-  "partialCoverage": [
-    { "requirement": "...", "matchedTestCaseIds": ["ID-3"], "missingAspects": ["..."], "reason": "..." }
-  ],
-  "missingCoverage": [
-    { "requirement": "...", "reason": "..." }
-  ],
-  "recommendations": "..."
-}
-(Recommendations dalam ${language})`;
-
-      const result = await ai.models.generateContent({
-        model: MODAL_NAME,
-        contents: [{ role: 'user', parts: [...parts, { text: prompt }] }],
-        config: {
-          responseMimeType: "application/json",
+      const resultData = await callGemini({
+        contents,
+        modelConfig: {
           responseSchema: {
-            type: Type.OBJECT,
+            type: "OBJECT",
             properties: {
               fullCoverage: { 
-                type: Type.ARRAY, 
+                type: "ARRAY", 
                 items: { 
-                  type: Type.OBJECT,
-                  properties: {
-                    requirement: { type: Type.STRING },
-                    matchedTestCaseIds: { type: Type.ARRAY, items: { type: Type.STRING } },
-                    reason: { type: Type.STRING }
-                  },
-                  required: ['requirement', 'reason']
+                  type: "OBJECT",
+                  properties: { requirement: { type: "STRING" }, matchedTestCaseIds: { type: "ARRAY", items: { type: "STRING" } }, reason: { type: "STRING" } }
                 } 
               },
               partialCoverage: { 
-                type: Type.ARRAY, 
+                type: "ARRAY", 
                 items: { 
-                  type: Type.OBJECT,
-                  properties: {
-                    requirement: { type: Type.STRING },
-                    matchedTestCaseIds: { type: Type.ARRAY, items: { type: Type.STRING } },
-                    missingAspects: { type: Type.ARRAY, items: { type: Type.STRING } },
-                    reason: { type: Type.STRING }
-                  },
-                  required: ['requirement', 'reason']
+                  type: "OBJECT",
+                  properties: { requirement: { type: "STRING" }, matchedTestCaseIds: { type: "ARRAY", items: { type: "STRING" } }, missingAspects: { type: "ARRAY", items: { type: "STRING" } }, reason: { type: "STRING" } }
                 } 
               },
               missingCoverage: { 
-                type: Type.ARRAY, 
+                type: "ARRAY", 
                 items: { 
-                  type: Type.OBJECT,
-                  properties: {
-                    requirement: { type: Type.STRING },
-                    reason: { type: Type.STRING }
-                  },
-                  required: ['requirement', 'reason']
+                  type: "OBJECT",
+                  properties: { requirement: { type: "STRING" }, reason: { type: "STRING" } }
                 } 
               },
-              recommendations: { type: Type.STRING }
-            },
-            required: ['fullCoverage', 'partialCoverage', 'missingCoverage', 'recommendations']
+              recommendations: { type: "STRING" }
+            }
           }
-        }
+        },
+        systemInstruction: `Analisis dokumen PRD dan daftar test case. Manfaatkan field 'coveredRequirement' pada test case (jika ada) untuk pemetaan yang akurat. Language: ${language}`
       });
 
-      const text = result.text;
-      if (text) {
-        const parsed = JSON.parse(text);
-        
-        const fullyCovered = parsed.fullCoverage || [];
-        const partiallyCovered = parsed.partialCoverage || [];
-        const missingRequirements = parsed.missingCoverage || [];
-        
-        const percent = calculateCoverageRatio(fullyCovered, partiallyCovered, missingRequirements);
+      const parsed = JSON.parse(resultData.text);
+      const fullyCovered = parsed.fullCoverage || [];
+      const partiallyCovered = parsed.partialCoverage || [];
+      const missingRequirements = parsed.missingCoverage || [];
+      const percent = calculateCoverageRatio(fullyCovered, partiallyCovered, missingRequirements);
 
-        const res: CoverageResult = {
-          percent,
-          fullyCovered,
-          partiallyCovered,
-          missingRequirements,
-          recommendations: parsed.recommendations || ""
-        };
-        
-        if (isChecker) {
-          setCheckerCoverage(res);
-          setViewMode('coverage');
-        } else {
-          setGeneratorCoverage(res);
-          toast.success("Coverage analysis selesai!");
-        }
+      const res: CoverageResult = {
+        percent,
+        fullyCovered,
+        partiallyCovered,
+        missingRequirements,
+        recommendations: parsed.recommendations || ""
+      };
+      
+      if (isChecker) {
+        setCheckerCoverage(res);
+        setViewMode('coverage');
+      } else {
+        setGeneratorCoverage(res);
+        toast.success("Coverage analysis selesai!");
       }
-    } catch (error) {
-      console.error("Coverage check failed:", error);
-      toast.error("Gagal melakukan pengecekan coverage.");
+    } catch (error: any) {
+      toast.error("Coverage check failed: " + error.message);
     } finally {
       setIsCheckingCoverage(false);
     }
@@ -712,105 +867,56 @@ Return JSON dengan format:
 
     setIsGeneratingMissingCases(true);
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
       const currentSelectedTemplate = results.length > 0 ? activeResultsTemplate : template;
+      const trulyMissing = generatorCoverage.missingRequirements.filter(req => !isLikelyDuplicateRequirement(req.requirement, results));
+      const trulyPartial = generatorCoverage.partiallyCovered.filter(req => !isLikelyDuplicateRequirement(req.requirement, results));
 
-      const prompt = `Berdasarkan requirement yang belum tercover atau baru tercover sebagian berikut, generate test case TAMBAHAN untuk mencapai 100% coverage.
+      let contents: any[] = [];
+      let parts: any[] = [];
+      const prompt = `Generate missing cases for coverage gaps. Requirements: ${JSON.stringify(trulyMissing.concat(trulyPartial))}`;
+      parts.push({ text: prompt });
+      contents.push({ role: 'user', parts });
 
-PENTING:
-- Gunakan template ${currentSelectedTemplate}, bahasa ${language}, dan gaya penulisan yang SAMA dengan contoh test case yang sudah ada.
-- Jangan generate test case duplikat. Jika requirement sudah ada di daftar referensi, abaikan.
-- Gunakan field yang konsisten dengan template ${currentSelectedTemplate}.
-
-REQUIREMENTS YANG PERLU DITINGKATKAN:
-- BELUM TERCOVER (Missing):
-${trulyMissing.map(item => `- ${item.requirement} (${item.reason})`).join('\n')}
-
-- TERCOVER SEBAGIAN (Butuh Negative/Edge cases):
-${trulyPartial.map(item => `- ${item.requirement} (Problem: ${item.reason})`).join('\n')}
-
-TEST CASE REFERENSI FORMAT (PENTING! IKUTI STRUKTUR INI):
-${results.slice(0, 3).map(tc => {
-  let fieldsStr = `[ID: ${tc.id}] Title: ${tc.title}, Type: ${tc.type}, Expected: ${tc.expectedResult}`;
-  if (currentSelectedTemplate === 'Gherkin') fieldsStr += `, Given: ${tc.given}, When: ${tc.when}, Then: ${tc.then}`;
-  if (currentSelectedTemplate === 'Jira/Zephyr' || currentSelectedTemplate === 'TestRail') fieldsStr += `, Priority: ${tc.priority}, Precondition: ${tc.preconditions}`;
-  return fieldsStr;
-}).join('\n')}
-
-ANTI-HALLUCINATION INSTRUCTIONS:
-- Hanya generate test case berdasarkan requirement yang EKSPLISIT disebutkan.
-- DO NOT generate a new test case if the requirement is already covered by any existing test case above.
-
-INSTRUKSI:
-1. Untuk yang BELUM TERCOVER: Generate 1 Positive + skenario Negative relevan.
-2. Untuk yang TERCOVER SEBAGIAN: HANYA generate skenario yang belum ada.
-
-Output format: JSON dengan field yang sesuai dengan template ${currentSelectedTemplate}.`;
-
-      let parts: any[] = [{ text: prompt }];
-      if (generatorFile) {
-        if (generatorFile.mimeType === 'application/pdf') {
-          parts.push({ inlineData: { data: generatorFile.base64, mimeType: generatorFile.mimeType } });
-        } else {
-          parts.push({ text: `PRD Content:\n${generatorFile.rawText}` });
-        }
-      }
-
-      const result = await ai.models.generateContent({
-        model: MODAL_NAME,
-        contents: [{ role: 'user', parts }],
-        config: {
-          systemInstruction: `You are a senior QA engineer. Generate test cases for missing requirements. 
-          STRICT RULES:
-          - Hanya generate test case berdasarkan requirement yang EKSPLISIT disebutkan dalam input. Jangan tambahkan test case dari pengetahuan umum atau asumsi tentang fitur tersebut.
-          - Generate positive (if missing) and ALL failure conditions as separate cases.
-          - DO NOT skip negative cases.
-          - Use varied action verbs.
-          - For Gherkin, keep given, when, and then (lowercase) short, strictly descriptive. Output in ${language}.`,
-          responseMimeType: "application/json",
+      const resultData = await callGemini({
+        contents,
+        modelConfig: {
           responseSchema: {
-            type: Type.OBJECT,
+            type: "OBJECT",
             properties: {
-              prefix: { type: Type.STRING },
               testCases: {
-                type: Type.ARRAY,
+                type: "ARRAY",
                 items: {
-                  type: Type.OBJECT,
+                  type: "OBJECT",
                   properties: {
-                    id_number: { type: Type.STRING },
-                    title: { type: Type.STRING },
-                    type: { type: Type.STRING, enum: ['Positive', 'Negative', 'Edge Case'] },
-                    priority: { type: Type.STRING, enum: ['High', 'Medium', 'Low'] },
-                    preconditions: { type: Type.STRING },
-                    steps: { type: Type.ARRAY, items: { type: Type.STRING } },
-                    expectedResult: { type: Type.STRING },
-                    given: { type: Type.STRING },
-                    when: { type: Type.STRING },
-                    then: { type: Type.STRING },
-                  },
-                  required: ['id_number', 'title', 'type', 'priority', 'steps', 'expectedResult', 'given', 'when', 'then']
+                    id_number: { type: "STRING" },
+                    title: { type: "STRING" },
+                    type: { type: "STRING", enum: ['Positive', 'Negative', 'Edge Case'] },
+                    priority: { type: "STRING", enum: ['High', 'Medium', 'Low'] },
+                    preconditions: { type: "STRING" },
+                    steps: { type: "ARRAY", items: { type: "STRING" } },
+                    expectedResult: { type: "STRING" },
+                    coveredRequirement: { type: "STRING" }
+                  }
                 }
               }
             }
           }
-        }
+        },
+        systemInstruction: `QA Lead Expert. Fokus pada mengisi celah coverage (missing aspects). Language: ${language}`
       });
 
-      const textOutput = result.text;
-      if (textOutput) {
-        const parsed = JSON.parse(textOutput);
-        const { prefix, nextNum } = getNextIdSequence(results);
-        const newCases: TestCase[] = (parsed.testCases || []).map((tc: any, idx: number) => ({
-          ...tc,
-          source: 'coverage-gap',
-          id: `${prefix}-${String(nextNum + idx).padStart(3, '0')}`
-        }));
-        setSuggestedMissingTestCases(newCases);
-        toast.success(`Berhasil generate ${newCases.length} missing test cases!`);
-      }
-    } catch (error) {
-      console.error("Missing cases generation failed:", error);
-      toast.error("Gagal generate test case tambahan.");
+      const parsed = JSON.parse(resultData.text);
+      const newCases: TestCase[] = (parsed.testCases || []).map((tc: any, i: number) => ({
+        ...tc,
+        id: `GAP-${String(results.length + i + 1).padStart(3, '0')}`,
+        type: tc.type || 'Negative',
+        priority: tc.priority || 'Medium',
+        source: 'coverage-gap'
+      }));
+      setSuggestedMissingTestCases(newCases);
+      toast.success("Gap scenarios generated!");
+    } catch (error: any) {
+      toast.error("GAP generation failed: " + error.message);
     } finally {
       setIsGeneratingMissingCases(false);
     }
@@ -839,7 +945,9 @@ Output format: JSON dengan field yang sesuai dengan template ${currentSelectedTe
 
     return (
       <tr className={cn(bgHeader, "backdrop-blur-md border-b text-[10px] font-bold uppercase tracking-widest", borderHeader, textHeader)}>
-        <th className="px-6 py-4 min-w-[120px] whitespace-nowrap">ID</th>
+        <th className="px-6 py-4 min-w-[120px] whitespace-nowrap text-left flex items-center gap-2">
+          <span>ID</span>
+        </th>
         <th className="px-6 py-4 w-32 text-center border-x border-blue-50/50">Type</th>
         {template === 'Simple' && (
           <>
@@ -885,22 +993,11 @@ Output format: JSON dengan field yang sesuai dengan template ${currentSelectedTe
 
     setRegeneratingIds(prev => new Set(prev).add(id));
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      let contents: any[] = [];
+      let parts: any[] = [];
+      const prompt = `Regenerate exactly ONE test case that is DIFFERENT but tests the same feature area. Old Test Case: ${JSON.stringify(originalCase)}`;
       
-      const prompt = `Regenerate exactly ONE test case that is DIFFERENT from the one provided but tests the same feature area.
-Feature PRD context is provided in the previous turn or below.
-
-ANTI-HALLUCINATION RULES:
-- Hanya generate test case berdasarkan requirement yang EKSPLISIT disebutkan dalam input. 
-- Jangan tambahkan test case dari pengetahuan umum atau asumsi tentang fitur tersebut.
-
-Old Test Case: ${JSON.stringify(originalCase)}
-Template: ${activeResultsTemplate}
-Language: ${language}
-ATURAN Gherkin: given, when, then wajib lengkap (max 1-2 kalimat singkat). Dilarang "N/A".
-Return exactly ONE JSON object matching the test case schema.`;
-
-      let parts: any[] = [{ text: prompt }];
+      parts.push({ text: prompt });
       if (inputMode === 'manual') {
         parts.push({ text: `PRD Context:\n${prdText}` });
       } else if (generatorFile) {
@@ -911,73 +1008,42 @@ Return exactly ONE JSON object matching the test case schema.`;
         }
       }
 
-      let result;
-      for (let attempt = 0; attempt < 2; attempt++) {
-        try {
-          result = await ai.models.generateContent({
-            model: MODAL_NAME,
-            contents: [{ role: 'user', parts }],
-              config: {
-                systemInstruction: `For Gherkin template, strictly provide given, when, and then (lowercase) fields (max 1-2 short sentences) without "N/A" or placeholders. Output must be in ${language}.`,
-                responseMimeType: "application/json",
-                responseSchema: {
-                  type: Type.OBJECT,
-                  properties: {
-                    title: { type: Type.STRING },
-                    type: { type: Type.STRING, enum: ['Positive', 'Negative', 'Edge Case'] },
-                    priority: { type: Type.STRING, enum: ['High', 'Medium', 'Low'] },
-                    preconditions: { type: Type.STRING },
-                    steps: { type: Type.ARRAY, items: { type: Type.STRING } },
-                    expectedResult: { type: Type.STRING },
-                    given: { type: Type.STRING },
-                    when: { type: Type.STRING },
-                    then: { type: Type.STRING },
-                  },
-                  required: ['title', 'type', 'priority', 'steps', 'expectedResult', 'given', 'when', 'then']
-                }
-              }
-          });
-          break;
-        } catch (err: any) {
-          const errMsg = err.message || "";
-          if ((errMsg.includes("429") || errMsg.includes("RESOURCE_EXHAUSTED") || errMsg.includes("quota")) && attempt < 1) {
-            console.warn(`Quota hit, retrying in 5s... (Regen attempt ${attempt + 1})`);
-            await new Promise(r => setTimeout(r, 5000));
-            continue;
+      contents.push({ role: 'user', parts });
+
+      const resultData = await callGemini({
+        contents,
+        modelConfig: {
+          responseSchema: {
+            type: "OBJECT",
+            properties: {
+              id_number: { type: "STRING" },
+              title: { type: "STRING" },
+              type: { type: "STRING", enum: ['Positive', 'Negative', 'Edge Case'] },
+              priority: { type: "STRING", enum: ['High', 'Medium', 'Low'] },
+              preconditions: { type: "STRING" },
+              steps: { type: "ARRAY", items: { type: "STRING" } },
+              expectedResult: { type: "STRING" },
+              coveredRequirement: { type: "STRING" },
+              given: { type: "STRING" },
+              when: { type: "STRING" },
+              then: { type: "STRING" },
+            }
           }
-          throw err;
-        }
-      }
+        },
+        systemInstruction: `Senior Lead QA Engineer. Language: ${language}`
+      });
 
-      const textOutput = result?.text;
-      if (textOutput) {
-        const newCase: TestCase = JSON.parse(textOutput);
-        if (isSuggested) {
-          setSuggestedMissingTestCases(prev => prev.map(item => item.id === id ? { ...newCase, id, source: 'coverage-gap' } : item));
-        } else {
-          setResults(prev => prev.map(item => item.id === id ? { ...newCase, id, source: originalCase.source } : item));
-        }
-        toast.success("Berhasil regenerasi test case!");
-      }
-    } catch (error: any) {
-      console.error("Regeneration failed:", error);
-      let msg = error.message || "Gagal melakukan regenerasi.";
-      
-      // Try to extract clean message if it's JSON
-      try {
-        if (msg.includes('{')) {
-          const start = msg.indexOf('{');
-          const jsonStr = msg.substring(start);
-          const parsed = JSON.parse(jsonStr);
-          if (parsed.error?.message) msg = parsed.error.message;
-        }
-      } catch (e) {}
+      const tc = JSON.parse(resultData.text);
+      const updatedCase: TestCase = { ...tc, id, source: originalCase.source };
 
-      if (msg.includes("429") || msg.includes("RESOURCE_EXHAUSTED") || msg.toLowerCase().includes("quota")) {
-        toast.error("Gagal regenerasi: Kuota API Gemini habis.");
+      if (isSuggested) {
+        setSuggestedMissingTestCases(prev => prev.map(r => r.id === id ? updatedCase : r));
       } else {
-        toast.error("Gagal regenerasi: " + msg);
+        setResults(prev => prev.map(r => r.id === id ? updatedCase : r));
       }
+      toast.success("Test case diperbarui!");
+    } catch (error: any) {
+      toast.error("Regeneration failed: " + error.message);
     } finally {
       setRegeneratingIds(prev => {
         const next = new Set(prev);
@@ -986,7 +1052,6 @@ Return exactly ONE JSON object matching the test case schema.`;
       });
     }
   };
-
   const deleteCase = (id: string) => {
     setResults(prev => prev.filter(tc => tc.id !== id));
     toast.success("Test case berhasil dihapus!");
@@ -1010,6 +1075,27 @@ Return exactly ONE JSON object matching the test case schema.`;
     setEditBuffer(null);
   };
 
+  const openExportModal = (format: 'csv' | 'excel') => {
+    setExportModal({
+      show: true,
+      format,
+      filename: ''
+    });
+  };
+
+  const handleExportConfirm = () => {
+    handleExport(exportModal.format, exportModal.filename);
+    setExportModal(prev => ({ ...prev, show: false }));
+  };
+
+  const handleExport = (format: 'csv' | 'excel', filename: string) => {
+    if (format === 'csv') {
+      exportCSV(filename);
+    } else {
+      exportExcel(filename);
+    }
+  };
+
   const fullReset = () => {
     setConfirmation({
       show: true,
@@ -1017,6 +1103,7 @@ Return exactly ONE JSON object matching the test case schema.`;
       message: 'Yakin ingin menghapus semua hasil saat ini?',
       onConfirm: () => {
         setResults([]);
+        setGeneratorImages([]);
         setSuggestedMissingTestCases([]);
         setGeneratorCoverage(null);
         setCheckerCoverage(null);
@@ -1073,7 +1160,7 @@ Return exactly ONE JSON object matching the test case schema.`;
   }, [results]);
 
   const filteredResults = useMemo(() => {
-    setCurrentPage(1); // Reset page on filter/search change
+    setResultsPage(1); // Reset page on filter/search change
     return generateTestCasesBatch().filter(tc => {
       const matchesFilter = activeFilter === 'All' || tc.type === activeFilter;
       const matchesSearch = tc.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -1083,9 +1170,9 @@ Return exactly ONE JSON object matching the test case schema.`;
   }, [generateTestCasesBatch, activeFilter, searchQuery]);
 
   const paginatedResults = useMemo(() => {
-    const startIndex = (currentPage - 1) * pageSize;
+    const startIndex = (resultsPage - 1) * pageSize;
     return filteredResults.slice(startIndex, startIndex + pageSize);
-  }, [filteredResults, currentPage]);
+  }, [filteredResults, resultsPage]);
 
   const totalPages = Math.ceil(filteredResults.length / pageSize);
 
@@ -1097,46 +1184,47 @@ Return exactly ONE JSON object matching the test case schema.`;
     setTimeout(() => setCopySuccess(false), 2000);
   };
 
-  const exportCSV = () => {
+  const exportCSV = (filename?: string) => {
     let headers: string[] = [];
     let rows: any[] = [];
 
     if (activeResultsTemplate === 'Simple') {
-      headers = ['ID', 'Title', 'Type', 'Priority', 'Steps', 'Expected Result'];
-      rows = filteredResults.map(tc => [tc.id, tc.title, tc.type, tc.priority, tc.steps.join('; '), tc.expectedResult]);
+      headers = ['ID', 'Type', 'Test Case', 'Steps', 'Expected Result'];
+      rows = filteredResults.map(tc => [tc.id, tc.type, tc.title, tc.steps.join('\n'), tc.expectedResult]);
     } else if (activeResultsTemplate === 'Gherkin') {
-      headers = ['ID', 'Scenario', 'Type', 'Given', 'When', 'Then'];
-      rows = filteredResults.map(tc => [tc.id, tc.title, tc.type, tc.given, tc.when, tc.then]);
+      headers = ['ID', 'Type', 'Scenario', 'Given', 'When', 'Then'];
+      rows = filteredResults.map(tc => [tc.id, tc.type, tc.title, tc.given || 'N/A', tc.when || 'N/A', tc.then || tc.expectedResult]);
     } else if (activeResultsTemplate === 'Jira/Zephyr') {
-      headers = ['ID', 'Priority', 'Precondition', 'Title / Scenario', 'Steps', 'Expected'];
-      rows = filteredResults.map(tc => [tc.id, tc.priority, tc.preconditions, tc.title, tc.steps.join('; '), tc.expectedResult]);
+      headers = ['ID', 'Type', 'Priority', 'Precondition', 'Title / Scenario', 'Steps', 'Expected'];
+      rows = filteredResults.map(tc => [tc.id, tc.type, tc.priority, tc.preconditions || '-', tc.title, tc.steps.join('\n'), tc.expectedResult]);
     } else if (activeResultsTemplate === 'TestRail') {
-      headers = ['ID', 'Title', 'Steps', 'Expected Result', 'Priority', 'Type'];
-      rows = filteredResults.map(tc => [tc.id, tc.title, tc.steps.join('; '), tc.expectedResult, tc.priority, tc.type]);
+      headers = ['ID', 'Type', 'Title', 'Steps', 'Expected Result', 'Priority'];
+      rows = filteredResults.map(tc => [tc.id, tc.type, tc.title, tc.steps.join('\n'), tc.expectedResult, tc.priority]);
     }
     
     const csvContent = "\uFEFF" + [headers, ...rows].map(e => e.map(item => `"${(item || '').toString().replace(/"/g, '""')}"`).join(",")).join("\n");
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    saveAs(blob, `test_cases_${new Date().getTime()}.csv`);
+    const finalFilename = filename || `test_cases_${new Date().getTime()}`;
+    saveAs(blob, `${finalFilename}.csv`);
     toast.success("CSV berhasil di-export!");
   };
 
-  const exportExcel = () => {
+  const exportExcel = (filename?: string) => {
     let headers: string[] = [];
     let rows: any[] = [];
 
     if (activeResultsTemplate === 'Simple') {
-      headers = ['ID', 'Title', 'Type', 'Priority', 'Steps', 'Expected Result'];
-      rows = filteredResults.map(tc => [tc.id, tc.title, tc.type, tc.priority, tc.steps.join('\n'), tc.expectedResult]);
+      headers = ['ID', 'Type', 'Test Case', 'Steps', 'Expected Result'];
+      rows = filteredResults.map(tc => [tc.id, tc.type, tc.title, tc.steps.join('\n'), tc.expectedResult]);
     } else if (activeResultsTemplate === 'Gherkin') {
-      headers = ['ID', 'Scenario', 'Type', 'Given', 'When', 'Then'];
-      rows = filteredResults.map(tc => [tc.id, tc.title, tc.type, tc.given, tc.when, tc.then]);
+      headers = ['ID', 'Type', 'Scenario', 'Given', 'When', 'Then'];
+      rows = filteredResults.map(tc => [tc.id, tc.type, tc.title, tc.given || 'N/A', tc.when || 'N/A', tc.then || tc.expectedResult]);
     } else if (activeResultsTemplate === 'Jira/Zephyr') {
-      headers = ['ID', 'Priority', 'Precondition', 'Title / Scenario', 'Steps', 'Expected'];
-      rows = filteredResults.map(tc => [tc.id, tc.priority, tc.preconditions, tc.title, tc.steps.join('\n'), tc.expectedResult]);
+      headers = ['ID', 'Type', 'Priority', 'Precondition', 'Title / Scenario', 'Steps', 'Expected'];
+      rows = filteredResults.map(tc => [tc.id, tc.type, tc.priority, tc.preconditions || '-', tc.title, tc.steps.join('\n'), tc.expectedResult]);
     } else if (activeResultsTemplate === 'TestRail') {
-      headers = ['ID', 'Title', 'Steps', 'Expected Result', 'Priority', 'Type'];
-      rows = filteredResults.map(tc => [tc.id, tc.title, tc.steps.join('\n'), tc.expectedResult, tc.priority, tc.type]);
+      headers = ['ID', 'Type', 'Title', 'Steps', 'Expected Result', 'Priority'];
+      rows = filteredResults.map(tc => [tc.id, tc.type, tc.title, tc.steps.join('\n'), tc.expectedResult, tc.priority]);
     }
 
     const worksheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
@@ -1145,7 +1233,8 @@ Return exactly ONE JSON object matching the test case schema.`;
     
     const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
     const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    saveAs(blob, `test_cases_${new Date().getTime()}.xlsx`);
+    const finalFilename = filename || `test_cases_${new Date().getTime()}`;
+    saveAs(blob, `${finalFilename}.xlsx`);
     toast.success("Excel berhasil di-export!");
   };
 
@@ -1158,61 +1247,340 @@ Return exactly ONE JSON object matching the test case schema.`;
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 text-[#1E293B] font-sans selection:bg-blue-100">
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 h-16 bg-white/30 backdrop-blur-md border-b border-white/40 flex items-center justify-between px-8 z-50">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-            <Zap className="text-white w-6 h-6 fill-white" />
-          </div>
-          <div>
-            <h1 className="font-bold text-xl tracking-tight text-blue-900 leading-none">QA Copilot</h1>
-            <p className="text-[10px] uppercase tracking-wider text-blue-600 font-semibold mt-1">AI Test Case Platform</p>
+    <div className={cn(
+      "min-h-screen text-[#1E293B] font-sans selection:bg-blue-100 overflow-x-hidden transition-colors duration-500",
+      appPage === 'home' ? "bg-transparent" : "bg-gradient-to-br from-blue-50 via-white to-blue-100"
+    )}>
+      {appPage === 'home' ? (
+        <div className="min-h-screen">
+          <Hero3DScene />
+          
+          {/* Landing Header */}
+          <header className="fixed top-0 left-0 right-0 h-20 bg-transparent flex items-center justify-between px-10 z-50">
+            <div className="flex items-center gap-3 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+              <AppLogo />
+            </div>
+
+            <nav className="hidden lg:flex items-center gap-8 bg-white/5 backdrop-blur-xl px-8 py-3 rounded-2xl border border-white/10 shadow-2xl">
+              <button 
+                onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
+                className="text-[10px] font-black uppercase tracking-widest text-slate-300 hover:text-white transition-colors"
+              >
+                Features
+              </button>
+              <button 
+                onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
+                className="text-[10px] font-black uppercase tracking-widest text-slate-300 hover:text-white transition-colors"
+              >
+                How it Works
+              </button>
+              <button 
+                onClick={() => document.getElementById('tools')?.scrollIntoView({ behavior: 'smooth' })}
+                className="text-[10px] font-black uppercase tracking-widest text-slate-300 hover:text-white transition-colors"
+              >
+                Tools
+              </button>
+              <button 
+                onClick={() => document.getElementById('footer')?.scrollIntoView({ behavior: 'smooth' })}
+                className="text-[10px] font-black uppercase tracking-widest text-slate-300 hover:text-white transition-colors"
+              >
+                About
+              </button>
+            </nav>
+
+            <div className="flex items-center gap-4">
+              <button 
+                onClick={() => { setAppPage('generator'); setActiveFeature('generator'); }}
+                className="px-6 py-2.5 bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-blue-500 transition-all shadow-lg shadow-blue-600/30 active:scale-95"
+              >
+                Launch App
+              </button>
+            </div>
+          </header>
+
+          <div className="pt-32 pb-20 px-8 max-w-6xl mx-auto relative z-10">
+            <div id="hero" className="text-center mb-20 relative z-10">
+              <motion.h2 
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                className="text-7xl font-black text-white mb-6 tracking-tight"
+              >
+                QA Copilot
+              </motion.h2>
+              <motion.p 
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.1 }}
+                className="text-xl text-blue-400 font-bold mb-6 uppercase tracking-[0.25em]"
+              >
+                AI Test Toolkit Platform
+              </motion.p>
+              <motion.p 
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.2 }}
+                className="text-slate-300 max-w-3xl mx-auto text-xl leading-relaxed font-medium mb-12"
+              >
+                Generate structured test cases, check coverage gaps across documentation, and prepare high-quality QA reports with the power of Gemini AI.
+              </motion.p>
+
+              <motion.div 
+                 initial={{ y: 20, opacity: 0 }}
+                 animate={{ y: 0, opacity: 1 }}
+                 transition={{ delay: 0.25 }}
+                 className="flex flex-wrap justify-center gap-12 mb-20"
+              >
+                <div className="text-center">
+                  <div className="text-4xl font-black text-white mb-1">98%</div>
+                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Efficiency gain</div>
+                </div>
+                <div className="w-px h-12 bg-white/10 hidden sm:block" />
+                <div className="text-center">
+                  <div className="text-4xl font-black text-white mb-1">2.0v</div>
+                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Gemini Intelligence</div>
+                </div>
+                <div className="w-px h-12 bg-white/10 hidden sm:block" />
+                <div className="text-center">
+                  <div className="text-4xl font-black text-white mb-1">Zero</div>
+                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Setup required</div>
+                </div>
+              </motion.div>
+            </div>
+
+            <div id="tools" className="grid grid-cols-1 md:grid-cols-3 gap-10">
+              <motion.div 
+                initial={{ y: 40, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.3 }}
+                className="bg-white/10 backdrop-blur-2xl p-10 rounded-[3rem] border border-white/10 shadow-2xl hover:bg-white/15 transition-all group"
+              >
+                <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mb-8 shadow-[0_0_20px_rgba(37,99,235,0.3)] group-hover:scale-110 transition-transform">
+                  <Zap className="text-white w-8 h-8 fill-white" />
+                </div>
+                <h3 className="text-2xl font-black text-white mb-4 tracking-tight">Test Case Generator</h3>
+                <p className="text-slate-300 text-sm leading-relaxed mb-10 font-medium">
+                  Generate structured test cases from requirements, PRD files, and UI screenshots automatically.
+                </p>
+                <button 
+                  onClick={() => { setAppPage('generator'); setActiveFeature('generator'); }}
+                  className="w-full py-4 bg-blue-600 text-white font-black uppercase tracking-widest text-[11px] rounded-2xl hover:bg-blue-500 transition-all active:scale-95 shadow-lg shadow-blue-600/30"
+                >
+                  Start Generator
+                </button>
+              </motion.div>
+
+              <motion.div 
+                initial={{ y: 40, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.4 }}
+                className="bg-white/10 backdrop-blur-2xl p-10 rounded-[3rem] border border-emerald-500/20 shadow-2xl hover:bg-white/15 transition-all group"
+              >
+                <div className="w-16 h-16 bg-emerald-600 rounded-2xl flex items-center justify-center mb-8 shadow-[0_0_20px_rgba(16,185,129,0.3)] group-hover:scale-110 transition-transform">
+                  <PieChart className="text-white w-8 h-8" />
+                </div>
+                <h3 className="text-2xl font-black text-white mb-4 tracking-tight">Coverage Checker</h3>
+                <p className="text-slate-300 text-sm leading-relaxed mb-10 font-medium">
+                  Compare your existing test cases with PRD documentation to identify missing coverage gaps.
+                </p>
+                <button 
+                  onClick={() => { setAppPage('coverage'); setActiveFeature('coverage'); }}
+                  className="w-full py-4 bg-emerald-600 text-white font-black uppercase tracking-widest text-[11px] rounded-2xl hover:bg-emerald-500 transition-all active:scale-95 shadow-lg shadow-emerald-600/30"
+                >
+                  Check Coverage
+                </button>
+              </motion.div>
+
+              <motion.div 
+                initial={{ y: 40, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.5 }}
+                className="bg-white/10 backdrop-blur-2xl p-10 rounded-[3rem] border border-white/10 border-dashed shadow-2xl hover:bg-white/15 transition-all group relative overflow-hidden"
+              >
+                <div className="absolute top-6 right-6 px-3 py-1 bg-white/10 rounded-full text-[9px] font-black uppercase text-slate-400 tracking-widest">Beta</div>
+                <div className="w-16 h-16 bg-slate-800 rounded-2xl flex items-center justify-center mb-8 shadow-lg group-hover:scale-110 transition-transform">
+                  <Bug className="text-white w-8 h-8" />
+                </div>
+                <h3 className="text-2xl font-black text-white mb-4 tracking-tight">Bug Report Gen</h3>
+                <p className="text-slate-300 text-sm leading-relaxed mb-10 font-medium">
+                  Transform bug findings and visual evidence into professional, developer-ready issue reports.
+                </p>
+                <button 
+                  onClick={() => setAppPage('bug_report')}
+                  className="w-full py-4 bg-white/20 text-white font-black uppercase tracking-widest text-[11px] rounded-2xl hover:bg-white/30 transition-all active:scale-95"
+                >
+                  Open Bug Report
+                </button>
+              </motion.div>
+            </div>
+
+            {/* How It Works Section */}
+            <div id="how-it-works" className="mt-40 mb-40">
+              <div className="text-center mb-20">
+                <h3 className="text-4xl font-black text-white mb-4 tracking-tight">How It Works</h3>
+                <p className="text-slate-400 font-medium">Three simple steps to professional QA documentation</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-12 relative">
+                {/* Connecting Lines (Desktop) */}
+                <div className="hidden md:block absolute top-1/2 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-y-1/2 z-0" />
+                
+                {[
+                  { icon: <Upload className="w-6 h-6" />, title: "1. Input Context", desc: "Upload PRD, technical docs, or simply paste your feature requirements." },
+                  { icon: <Zap className="w-6 h-6" />, title: "2. AI Processing", desc: "Gemini 2.0 analyzes requirements and screenshots to build exhaustive scenarios." },
+                  { icon: <Download className="w-6 h-6" />, title: "3. Export & Sync", desc: "Download in XLSX/CSV format or copy Gherkin scripts for your automation." }
+                ].map((step, idx) => (
+                  <motion.div 
+                    key={idx}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: idx * 0.2 }}
+                    className="flex flex-col items-center text-center relative z-10"
+                  >
+                    <div className="w-16 h-16 bg-blue-600/30 rounded-2xl flex items-center justify-center border border-blue-500/40 text-blue-400 mb-6 shadow-xl shadow-blue-900/60 backdrop-blur-md">
+                      {step.icon}
+                    </div>
+                    <h4 className="text-xl font-bold text-white mb-2">{step.title}</h4>
+                    <p className="text-slate-300 text-sm leading-relaxed px-4">{step.desc}</p>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+
+            {/* Benefit Grid */}
+            <div id="features" className="mb-40">
+              <div className="text-center mb-20">
+                <h3 className="text-4xl font-black text-white mb-4 tracking-tight">Built for Modern Teams</h3>
+                <p className="text-slate-400 font-medium">Powerful features to accelerate your testing lifecycle</p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {[
+                  { icon: <Globe className="w-5 h-5" />, title: "Multi-Language", desc: "Support for English and Indonesian localization." },
+                  { icon: <Shield className="w-5 h-5" />, title: "Privacy First", desc: "Your internal docs are processed securely and never stored permanently." },
+                  { icon: <LayoutDashboard className="w-5 h-5" />, title: "Multiple Formats", desc: "XLSX, CSV, and Gherkin / BDD compatible output." },
+                  { icon: <History className="w-5 h-5" />, title: "Session History", desc: "Automatically saves your recent sessions locally." }
+                ].map((item, idx) => (
+                  <div key={idx} className="p-8 rounded-[2rem] bg-white/10 backdrop-blur-xl border border-white/10 hover:bg-white/15 transition-colors">
+                    <div className="w-10 h-10 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 mb-6">
+                      {item.icon}
+                    </div>
+                    <h5 className="text-lg font-bold text-white mb-2">{item.title}</h5>
+                    <p className="text-slate-300 text-xs leading-relaxed">{item.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <footer id="footer" className="border-t border-white/5 pt-12 pb-12 mt-20">
+              <div className="flex flex-col md:flex-row justify-between items-center gap-8">
+                <div className="flex items-center gap-3 opacity-60 grayscale hover:grayscale-0 hover:opacity-100 transition-all cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+                  <AppLogo size="sm" theme="dark" />
+                </div>
+                <div className="flex gap-8 text-xs font-bold text-slate-400 uppercase tracking-widest">
+                  <button onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })} className="hover:text-blue-400 transition-colors">Features</button>
+                  <button onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })} className="hover:text-blue-400 transition-colors">How it Works</button>
+                  <button onClick={() => document.getElementById('tools')?.scrollIntoView({ behavior: 'smooth' })} className="hover:text-blue-400 transition-colors">Tools</button>
+                  <a href="#" className="hover:text-blue-400 transition-colors">Documentation</a>
+                </div>
+                <div className="text-[10px] font-medium text-slate-400 flex items-center gap-2">
+                  <div className="flex -space-x-2">
+                    {[1, 2, 3].map(i => (
+                      <div key={i} className="w-6 h-6 rounded-full border-2 border-[#020617] bg-slate-800" />
+                    ))}
+                  </div>
+                  <span>Trusted by 50+ QA Teams</span>
+                </div>
+              </div>
+              <div className="mt-12 text-center text-[10px] font-bold text-slate-500 uppercase tracking-[0.3em]">
+                &copy; 2024 QA Copilot AI. All rights reserved.
+              </div>
+            </footer>
           </div>
         </div>
+      ) : (
+        <div className="min-h-screen">
+          {/* Tools Header */}
+          <header className="fixed top-0 left-0 right-0 h-16 bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-8 z-50">
+            <div className="flex items-center gap-3 cursor-pointer" onClick={() => setAppPage('home')}>
+              <AppLogo theme="light" />
+            </div>
 
-        <nav className="flex items-center bg-slate-100/80 p-1 rounded-2xl border border-slate-200/60 shadow-sm ml-8">
-          <button 
-            onClick={() => setActiveFeature('generator')}
-            className={cn(
-              "px-5 py-2.5 text-xs font-bold uppercase tracking-widest rounded-xl transition-all flex items-center gap-2",
-              activeFeature === 'generator' ? "bg-white text-blue-600 shadow-sm" : "text-slate-400 hover:text-slate-600"
-            )}
-          >
-            <Zap className={cn("w-3.5 h-3.5", activeFeature === 'generator' ? "fill-blue-600" : "fill-none")} />
-            Generator
-          </button>
-          <button 
-            onClick={() => setActiveFeature('coverage')}
-            className={cn(
-              "px-5 py-2.5 text-xs font-bold uppercase tracking-widest rounded-xl transition-all flex items-center gap-2",
-              activeFeature === 'coverage' ? "bg-blue-600 text-white shadow-lg" : "text-slate-400 hover:text-slate-600"
-            )}
-          >
-            <PieChart className="w-3.5 h-3.5" />
-            Cek Coverage
-          </button>
-        </nav>
+            <nav className="flex absolute left-1/2 -translate-x-1/2 items-center bg-slate-100/80 p-1 rounded-2xl border border-slate-200/60 shadow-sm">
+              <button 
+                onClick={() => { setAppPage('generator'); setActiveFeature('generator'); }}
+                className={cn(
+                  "px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-xl transition-all flex items-center gap-2",
+                  appPage === 'generator' ? "bg-white text-blue-600 shadow-sm" : "text-slate-400 hover:text-slate-600"
+                )}
+              >
+                <Zap className={cn("w-3.5 h-3.5", appPage === 'generator' ? "fill-blue-600" : "fill-none")} />
+                Generator
+              </button>
+              <button 
+                onClick={() => { setAppPage('coverage'); setActiveFeature('coverage'); }}
+                className={cn(
+                  "px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-xl transition-all flex items-center gap-2",
+                  appPage === 'coverage' ? "bg-emerald-600 text-white shadow-lg" : "text-slate-400 hover:text-slate-600"
+                )}
+              >
+                <PieChart className="w-3.5 h-3.5" />
+                Coverage
+              </button>
+              <button 
+                onClick={() => setAppPage('bug_report')}
+                className={cn(
+                  "px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-xl transition-all flex items-center gap-2",
+                  appPage === 'bug_report' ? "bg-slate-800 text-white shadow-lg" : "text-slate-400 hover:text-slate-600"
+                )}
+              >
+                <Bug className="w-3.5 h-3.5" />
+                Bug Report
+              </button>
+            </nav>
 
-        <div className="flex items-center gap-4 ml-auto">
-          <button 
-            onClick={() => setShowHistory(true)}
-            className="flex items-center gap-2 px-3 py-1.5 bg-white/50 border border-blue-100 rounded-lg text-xs font-bold text-slate-600 hover:bg-white hover:text-blue-600 transition-all shadow-sm"
-          >
-            <History className="w-4 h-4" />
-            History
-          </button>
-          <div className="flex items-center gap-2 px-3 py-1 bg-white/50 border border-blue-100 rounded-full text-[10px] font-bold text-blue-700 uppercase tracking-wider">
-            <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
-            Tsuzui
-          </div>
-        </div>
-      </header>
+            <div className="flex items-center gap-4 ml-auto">
+              {appPage !== 'bug_report' && (
+                <button 
+                  onClick={() => setShowHistory(true)}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-white/50 border border-blue-100 rounded-lg text-xs font-bold text-slate-600 hover:bg-white hover:text-blue-600 transition-all shadow-sm"
+                >
+                  <History className="w-4 h-4" />
+                  History
+                </button>
+              )}
+              <div className="flex items-center gap-2 px-3 py-1 bg-white/50 border border-blue-100 rounded-full text-[10px] font-bold text-blue-700 uppercase tracking-wider">
+                <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
+                Tsuzui
+              </div>
+            </div>
+          </header>
 
-      <main className="pt-16 min-h-screen flex">
-        {/* Left Pane: Input */}
-        <section className="w-[320px] border-r border-white/40 bg-white/20 backdrop-blur-sm p-6 flex flex-col gap-8 fixed h-[calc(100vh-64px)] overflow-y-auto">
-          {activeFeature === 'generator' ? (
+          {appPage === 'bug_report' ? (
+            <div className="pt-16 min-h-screen flex items-center justify-center p-8 bg-white">
+              <div className="text-center max-w-lg">
+                <div className="w-20 h-20 bg-slate-100 rounded-3xl flex items-center justify-center mx-auto mb-8 animate-pulse">
+                  <Bug className="w-10 h-10 text-slate-400" />
+                </div>
+                <h2 className="text-4xl font-black text-slate-800 mb-4 tracking-tight">Bug Report Generator</h2>
+                <p className="text-blue-600 font-bold uppercase tracking-[0.2em] mb-6 text-sm">Coming Soon / Open Beta</p>
+                <p className="text-slate-500 mb-10 font-medium text-lg leading-relaxed">
+                  This tool will help QA engineers turn manual discovery into structured bug reports with reproduction steps, technical data, and screenshots.
+                </p>
+                <button 
+                  onClick={() => setAppPage('home')}
+                  className="px-8 py-3 bg-blue-600 text-white rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-blue-700 transition-all shadow-xl shadow-blue-600/20 active:scale-95 flex items-center gap-2 mx-auto"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  Back to Home
+                </button>
+              </div>
+            </div>
+          ) : (
+            <main className="pt-16 min-h-screen flex">
+          {/* Side Pane */}
+          <section className="w-[320px] border-r border-white/40 bg-white/20 backdrop-blur-sm p-6 flex flex-col gap-8 fixed h-[calc(100vh-64px)] overflow-y-auto">
+            {activeFeature === 'generator' ? (
             <div className="space-y-6">
               {/* Mode Switcher for Generator */}
               <div className="flex bg-slate-100/50 p-1.5 rounded-2xl border border-slate-200 shadow-inner">
@@ -1246,16 +1614,27 @@ Return exactly ONE JSON object matching the test case schema.`;
               </div>
 
               {inputMode === 'manual' ? (
-                <textarea
-                  value={prdText}
-                  onChange={(e) => handlePrdTextChange(e.target.value)}
-                  disabled={results.length > 0}
-                  placeholder="Contoh: Fitur Login dengan Google, validasi email, dan limit login..."
-                  className={cn(
-                    "w-full h-[320px] p-5 text-sm bg-white/60 border border-blue-100 rounded-3xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 shadow-inner transition-all outline-none resize-none font-sans placeholder:text-slate-400 leading-relaxed",
-                    results.length > 0 && "opacity-60 cursor-not-allowed"
-                  )}
-                />
+                <div className="relative group">
+                  <textarea
+                    value={prdText}
+                    onChange={(e) => handlePrdTextChange(e.target.value)}
+                    disabled={results.length > 0}
+                    placeholder="Contoh: Fitur Login dengan Google, validasi email, dan limit login..."
+                    className={cn(
+                      "w-full h-[320px] p-5 text-sm bg-white/60 border border-blue-100 rounded-3xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 shadow-inner transition-all outline-none resize-none font-sans placeholder:text-slate-400 leading-relaxed",
+                      results.length > 0 && "opacity-60 cursor-not-allowed"
+                    )}
+                  />
+                  <div className="absolute bottom-4 right-5 flex items-center gap-1.5 px-2.5 py-1 bg-white/80 backdrop-blur-sm border border-slate-100 rounded-full shadow-sm">
+                    <Hash className={cn("w-3 h-3", prdText.trim().split(/\s+/).filter(w => w.length > 0).length >= 15 ? "text-emerald-500" : "text-slate-400")} />
+                    <span className={cn(
+                      "text-[10px] font-bold",
+                      prdText.trim().split(/\s+/).filter(w => w.length > 0).length >= 15 ? "text-emerald-600" : "text-slate-500"
+                    )}>
+                      {prdText.trim().split(/\s+/).filter(w => w.length > 0).length} / 15 kata
+                    </span>
+                  </div>
+                </div>
               ) : (
                 <div className="space-y-4">
                   <div 
@@ -1297,6 +1676,52 @@ Return exactly ONE JSON object matching the test case schema.`;
                   )}
                 </div>
               )}
+
+              {/* UI Screenshots (Optional) Section */}
+              <div className="space-y-4 pt-2">
+                <div className="flex items-center justify-between px-1">
+                  <p className="text-[10px] font-bold text-blue-900 uppercase tracking-widest opacity-60">UI Screenshots / Wireframe (Optional)</p>
+                  {generatorImages.length > 0 && (
+                    <span className="text-[9px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">{generatorImages.length} images</span>
+                  )}
+                </div>
+                
+                <div 
+                  {...imageDropzone.getRootProps()} 
+                  className={cn(
+                    "flex flex-col items-center justify-center border-2 border-dashed rounded-3xl transition-all py-6",
+                    results.length > 0 ? "cursor-not-allowed opacity-40 border-slate-200" : imageDropzone.isDragActive ? "border-blue-500 bg-blue-50 cursor-pointer" : "border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-blue-200 cursor-pointer"
+                  )}
+                >
+                  <input {...imageDropzone.getInputProps()} disabled={results.length > 0} />
+                  <PlusCircle className="w-6 h-6 text-slate-400 mb-2" />
+                  <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider px-6 text-center leading-relaxed">
+                    Unggah Screenshot atau UI Design
+                  </p>
+                </div>
+
+                {generatorImages.length > 0 && (
+                  <div className="grid grid-cols-3 gap-2 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    {generatorImages.map((img, idx) => (
+                      <div key={idx} className="relative group aspect-square rounded-xl overflow-hidden border border-slate-200 bg-white">
+                        <img 
+                          src={`data:${img.mimeType};base64,${img.base64}`} 
+                          alt={img.name} 
+                          className="w-full h-full object-cover"
+                        />
+                        {results.length === 0 && (
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); removeGeneratorImage(idx); }}
+                            className="absolute top-1 right-1 p-1 bg-black/50 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           ) : (
             <div className="space-y-6">
@@ -1390,8 +1815,12 @@ Return exactly ONE JSON object matching the test case schema.`;
                     <div className="relative group">
                       <select 
                         value={template}
+                        disabled={results.length > 0}
                         onChange={(e) => handleTemplateChange(e.target.value as TemplateType)}
-                        className="w-full bg-white/60 border border-blue-100 rounded-xl px-4 py-2 text-[11px] outline-none focus:ring-4 focus:ring-blue-500/10 shadow-sm transition-all appearance-none"
+                        className={cn(
+                          "w-full bg-white/60 border border-blue-100 rounded-xl px-4 py-2 text-[11px] outline-none focus:ring-4 focus:ring-blue-500/10 shadow-sm transition-all appearance-none",
+                          results.length > 0 && "opacity-60 cursor-not-allowed"
+                        )}
                       >
                         {TEMPLATES.map(t => <option key={t} value={t}>{t}</option>)}
                       </select>
@@ -1399,6 +1828,15 @@ Return exactly ONE JSON object matching the test case schema.`;
                     </div>
                   </div>
                 </div>
+
+                {results.length > 0 && (
+                  <div className="px-4 py-2 bg-amber-50 border border-amber-100 rounded-xl flex items-start gap-2 animate-in fade-in slide-in-from-top-1">
+                    <Info className="w-3 h-3 text-amber-600 mt-0.5 shrink-0" />
+                    <p className="text-[9px] text-amber-700 leading-tight">
+                      Template & Layout dikunci untuk menjaga konsistensi data. Reset session untuk mengubah.
+                    </p>
+                  </div>
+                )}
 
                 <button
                   onClick={handleGenerateClick}
@@ -1468,20 +1906,19 @@ Return exactly ONE JSON object matching the test case schema.`;
                       : "Visualisasi pemenuhan requirement pada file test case Anda"}
                   </p>
                 </div>
-
                 <div className="flex items-center gap-4">
-                      {activeFeature === 'generator' && filteredResults.length > 0 && (
-                        <div className="flex items-center gap-2">
-                          <button onClick={exportCSV} className="flex items-center gap-2 px-4 py-2 bg-white border border-blue-100 rounded-xl text-xs font-bold text-slate-600 hover:text-emerald-600 transition-all shadow-sm active:scale-95">
-                            <Download className="w-4 h-4" />
-                            CSV
-                          </button>
-                          <button onClick={exportExcel} className="flex items-center gap-2 px-4 py-2 bg-white border border-blue-100 rounded-xl text-xs font-bold text-slate-600 hover:text-emerald-600 transition-all shadow-sm active:scale-95">
-                            <FileBox className="w-4 h-4" />
-                            Excel
-                          </button>
-                        </div>
-                      )}
+                  {activeFeature === 'generator' && filteredResults.length > 0 && (
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => openExportModal('csv')} className="flex items-center gap-2 px-4 py-2 bg-white border border-blue-100 rounded-xl text-xs font-bold text-slate-600 hover:text-emerald-600 transition-all shadow-sm active:scale-95">
+                        <Download className="w-4 h-4" />
+                        CSV
+                      </button>
+                      <button onClick={() => openExportModal('excel')} className="flex items-center gap-2 px-4 py-2 bg-white border border-blue-100 rounded-xl text-xs font-bold text-slate-600 hover:text-emerald-600 transition-all shadow-sm active:scale-95">
+                        <FileBox className="w-4 h-4" />
+                        Excel
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -1863,11 +2300,11 @@ Return exactly ONE JSON object matching the test case schema.`;
                         <div className="flex items-center gap-4">
                            {totalPages > 1 && (
                             <div className="flex items-center gap-1">
-                               <button onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} disabled={currentPage === 1} className="p-1.5 rounded-lg bg-white border border-blue-100 text-blue-600 disabled:opacity-30">
+                               <button onClick={() => setResultsPage(prev => Math.max(1, prev - 1))} disabled={resultsPage === 1} className="p-1.5 rounded-lg bg-white border border-blue-100 text-blue-600 disabled:opacity-30">
                                  <Undo2 className="w-3.5 h-3.5 rotate-90" />
                                </button>
-                               <span className="px-3">Page {currentPage} of {totalPages}</span>
-                               <button onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} disabled={currentPage === totalPages} className="p-1.5 rounded-lg bg-white border border-blue-100 text-blue-600 disabled:opacity-30">
+                               <span className="px-3">Page {resultsPage} of {totalPages}</span>
+                               <button onClick={() => setResultsPage(prev => Math.min(totalPages, prev + 1))} disabled={resultsPage === totalPages} className="p-1.5 rounded-lg bg-white border border-blue-100 text-blue-600 disabled:opacity-30">
                                  <Undo2 className="w-3.5 h-3.5 -rotate-90" />
                                </button>
                             </div>
@@ -1940,18 +2377,6 @@ Return exactly ONE JSON object matching the test case schema.`;
                             </div>
                           </div>
                         </div>
-
-                        {generatorCoverage.recommendations && (
-                          <div className="mx-8 mt-8 bg-blue-900 border border-blue-800 p-6 rounded-[2.5rem] shadow-2xl flex items-start gap-5">
-                            <div className="p-3 bg-blue-800 rounded-2xl shrink-0">
-                              <Zap className="w-6 h-6 text-blue-300 fill-blue-300" />
-                            </div>
-                            <div className="space-y-1">
-                              <h4 className="text-[11px] font-bold uppercase tracking-widest text-blue-400">Rekomendasi Strategis AI</h4>
-                              <p className="text-base font-medium text-white leading-relaxed">{generatorCoverage.recommendations}</p>
-                            </div>
-                          </div>
-                        )}
 
                         <div className="p-8 grid grid-cols-1 md:grid-cols-3 gap-10">
                           <div className="space-y-4">
@@ -2133,6 +2558,7 @@ Return exactly ONE JSON object matching the test case schema.`;
   </div>
 </section>
 </main>
+      )}
 
       {/* History Panel */}
       <AnimatePresence>
@@ -2252,9 +2678,75 @@ Return exactly ONE JSON object matching the test case schema.`;
             </motion.div>
           </div>
         )}
+
+        {/* Export Modal */}
+        {exportModal.show && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setExportModal(prev => ({ ...prev, show: false }))}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden"
+            >
+              <div className="p-8">
+                <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mb-6">
+                  {exportModal.format === 'csv' ? <Download className="w-8 h-8 text-blue-600" /> : <FileBox className="w-8 h-8 text-emerald-600" />}
+                </div>
+                <h3 className="text-xl font-bold text-slate-800 mb-2">Export Data (.{exportModal.format})</h3>
+                <p className="text-sm text-slate-500 mb-6">Masukkan nama file jika ingin custom, atau kosongkan untuk nama otomatis.</p>
+                
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Nama File (Optional)</label>
+                    <input 
+                      type="text" 
+                      value={exportModal.filename}
+                      onChange={(e) => setExportModal(prev => ({ ...prev, filename: e.target.value }))}
+                      placeholder="Contoh: checkout_flows_v1"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-4 focus:ring-blue-500/10 outline-none transition-all placeholder:text-slate-300 font-medium"
+                    />
+                  </div>
+                  <div className="p-4 bg-slate-50 rounded-2xl flex items-center gap-3">
+                    <Info className="w-4 h-4 text-slate-400 shrink-0" />
+                    <p className="text-[10px] text-slate-500 leading-tight">
+                      File akan disimpan sebagai <span className="font-bold text-slate-700">{exportModal.filename || 'test_cases_TIMESTAMP'}.{exportModal.format}</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex p-4 gap-3 bg-slate-50 border-t border-slate-100">
+                <button 
+                  onClick={() => setExportModal(prev => ({ ...prev, show: false }))}
+                  className="flex-1 py-3.5 text-sm font-bold text-slate-500 hover:bg-slate-200 rounded-xl transition-all"
+                >
+                  Batal
+                </button>
+                <button 
+                  onClick={handleExportConfirm}
+                  className={cn(
+                    "flex-1 py-3.5 text-sm font-bold text-white rounded-xl transition-all shadow-lg",
+                    exportModal.format === 'csv' ? "bg-blue-600 hover:bg-blue-700 shadow-blue-600/20" : "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20"
+                  )}
+                >
+                  Download {exportModal.format.toUpperCase()}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
       </AnimatePresence>
       {/* Toaster */}
       <Toaster position="top-center" richColors />
+          </div>
+        )}
     </div>
   );
 }

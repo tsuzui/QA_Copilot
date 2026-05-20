@@ -13,6 +13,7 @@ export interface TestCase {
   given?: string;
   when?: string;
   then?: string;
+  coveredRequirement?: string;
 }
 
 export type TemplateType = 'Simple' | 'Gherkin' | 'Jira/Zephyr' | 'TestRail';

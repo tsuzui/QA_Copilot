@@ -2,5 +2,5 @@
   "name": "QA Copilot",
   "description": "AI-powered Test Case Generator that transforms PRDs into comprehensive test suites using Gemini 1.5 Pro.",
   "requestFramePermissions": [],
-  "majorCapabilities": []
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
