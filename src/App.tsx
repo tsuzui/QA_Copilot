@@ -3186,7 +3186,7 @@ Bahasa laporan wajib mengikuti: ${language}. Komunikasi harus ramah, formal, obj
                 onClick={() => { setAppPage('generator'); setActiveFeature('generator'); }}
                 className={cn(
                   "px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-xl transition-all flex items-center gap-2 cursor-pointer",
-                  appPage === 'generator' ? "bg-pink-600 text-white shadow-lg" : "text-slate-400 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-pink-50/50 dark:hover:bg-pink-950/20"
+                  appPage === 'generator' ? "bg-pink-600 text-white shadow-lg" : "text-slate-500 dark:text-slate-300 hover:text-slate-700 dark:hover:text-white hover:bg-pink-50/50 dark:hover:bg-pink-950/20"
                 )}
               >
                 <Zap className={cn("w-3.5 h-3.5", appPage === 'generator' ? "fill-white text-white" : "fill-none")} />
@@ -3196,7 +3196,7 @@ Bahasa laporan wajib mengikuti: ${language}. Komunikasi harus ramah, formal, obj
                 onClick={() => { setAppPage('coverage'); setActiveFeature('coverage'); }}
                 className={cn(
                   "px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-xl transition-all flex items-center gap-2 cursor-pointer",
-                  appPage === 'coverage' ? "bg-emerald-600 text-white shadow-lg" : "text-slate-400 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20"
+                  appPage === 'coverage' ? "bg-emerald-600 text-white shadow-lg" : "text-slate-500 dark:text-slate-300 hover:text-slate-700 dark:hover:text-white hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20"
                 )}
               >
                 <PieChart className="w-3.5 h-3.5" />
@@ -3206,7 +3206,7 @@ Bahasa laporan wajib mengikuti: ${language}. Komunikasi harus ramah, formal, obj
                 onClick={() => setAppPage('bug_report')}
                 className={cn(
                   "px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-xl transition-all flex items-center gap-2 cursor-pointer",
-                  appPage === 'bug_report' ? "bg-orange-600 text-white shadow-lg" : "text-slate-400 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-orange-50/50 dark:hover:bg-orange-950/20"
+                  appPage === 'bug_report' ? "bg-orange-600 text-white shadow-lg" : "text-slate-500 dark:text-slate-300 hover:text-slate-700 dark:hover:text-white hover:bg-orange-50/50 dark:hover:bg-orange-950/20"
                 )}
               >
                 <Bug className="w-3.5 h-3.5" />
@@ -3216,7 +3216,7 @@ Bahasa laporan wajib mengikuti: ${language}. Komunikasi harus ramah, formal, obj
                 onClick={() => setAppPage('requirement_checker')}
                 className={cn(
                   "px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-xl transition-all flex items-center gap-2 cursor-pointer",
-                  appPage === 'requirement_checker' ? "bg-violet-600 text-white shadow-lg" : "text-slate-400 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-violet-50/50 dark:hover:bg-violet-950/20"
+                  appPage === 'requirement_checker' ? "bg-violet-600 text-white shadow-lg" : "text-slate-500 dark:text-slate-300 hover:text-slate-700 dark:hover:text-white hover:bg-violet-50/50 dark:hover:bg-violet-950/20"
                 )}
               >
                 <ClipboardCheck className="w-3.5 h-3.5" />
@@ -3241,17 +3241,15 @@ Bahasa laporan wajib mengikuti: ${language}. Komunikasi harus ramah, formal, obj
               <button
                 onClick={() => setTheme(prev => prev === 'light' ? 'dark' : 'light')}
                 className={cn(
-                  "flex items-center gap-2 px-3 py-1.5 bg-white/50 dark:bg-slate-800/60 border rounded-full text-[10px] font-bold uppercase tracking-wider transition-all shadow-sm cursor-pointer active:scale-95",
-                  theme === 'dark' ? "border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800" : "border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-50",
-                  appPage === 'generator' ? "border-pink-200 dark:border-pink-900" :
-                  appPage === 'coverage' ? "border-emerald-200 dark:border-emerald-900" :
-                  appPage === 'bug_report' ? "border-orange-200 dark:border-orange-900" :
-                  "border-violet-200 dark:border-violet-900"
+                  "flex items-center gap-1.5 px-3.5 py-1.5 border rounded-full text-[10px] font-bold uppercase tracking-wider transition-all shadow-sm cursor-pointer active:scale-95",
+                  theme === 'dark' 
+                    ? "bg-amber-500/10 border-amber-500/30 text-amber-400 hover:bg-amber-500/20 hover:border-amber-400/60 hover:text-amber-300" 
+                    : "bg-slate-50 border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-100"
                 )}
                 title={theme === 'dark' ? "Aktifkan Mode Terang" : "Aktifkan Mode Gelap"}
               >
                 {theme === 'dark' ? (
-                  <Sun className="w-3.5 h-3.5 text-amber-400 fill-amber-300/10" />
+                  <Sun className="w-3.5 h-3.5 text-amber-400 fill-amber-400/20" />
                 ) : (
                   <Moon className="w-3.5 h-3.5 text-slate-600 fill-slate-400/15" />
                 )}
