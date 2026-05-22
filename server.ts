@@ -1,6 +1,17 @@
 import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
+import { Agent, setGlobalDispatcher } from "undici";
+
+// Configure undici global dispatcher to prevent HeadersTimeoutError
+const globalAgent = new Agent({
+  connect: {
+    timeout: 300000, // 5 minutes
+  },
+  headersTimeout: 300000, // 5 minutes
+  bodyTimeout: 300000, // 5 minutes
+});
+setGlobalDispatcher(globalAgent);
 
 async function startServer() {
   const app = express();
@@ -14,6 +25,7 @@ async function startServer() {
   const ai = new GoogleGenAI({ 
     apiKey: process.env.GEMINI_API_KEY || "",
     httpOptions: {
+      timeout: 300000, // 5 minutes
       headers: {
         'User-Agent': 'aistudio-build',
       }
@@ -25,12 +37,16 @@ async function startServer() {
     const maxRetries = 5;
     let attempt = 0;
     const initialModel = req.body.modelConfig?.model || "gemini-3.5-flash";
-    const fallbackModels = ["gemini-3.5-flash", "gemini-3.1-flash-lite", "gemini-flash-latest", "gemini-2.5-flash"];
+    const fallbackModels = ["gemini-3.5-flash", "gemini-3.1-flash-lite"];
     // Create a unique queue starting with the requested/detected model
     const modelQueue = Array.from(new Set([initialModel, ...fallbackModels]));
     
     const executeGeneration = async (modelName: string) => {
       const { contents, modelConfig, systemInstruction } = req.body;
+      
+      // Separate model and other non-config parameters from modelConfig
+      // to avoid passing "model" inside the nested config object (which causes strict type errors)
+      const { model, ...cleanConfig } = modelConfig || {};
       
       const response = await ai.models.generateContent({
         model: modelName,
@@ -38,7 +54,8 @@ async function startServer() {
         config: {
           systemInstruction,
           responseMimeType: "application/json",
-          ...modelConfig
+          temperature: 0.1, // Faster and more deterministic output for perfect JSON structure matching
+          ...cleanConfig
         }
       });
       return response;
@@ -48,7 +65,21 @@ async function startServer() {
       const currentModel = modelQueue[attempt % modelQueue.length];
       try {
         const response = await executeGeneration(currentModel);
-        return res.json({ text: response.text });
+        const text = response.text;
+        
+        if (!text) {
+          throw new Error("AI returned empty or null text response");
+        }
+
+        let cleanedText = text.trim();
+        // Automatically strip Markdown backticks code blocks on the server side
+        if (cleanedText.startsWith("```")) {
+          cleanedText = cleanedText.replace(/^```[a-zA-Z]*\n?/, "");
+          cleanedText = cleanedText.replace(/\n?```$/, "");
+        }
+        cleanedText = cleanedText.trim();
+
+        return res.json({ text: cleanedText });
       } catch (error: any) {
         attempt++;
         const isRetryable = 
@@ -56,13 +87,20 @@ async function startServer() {
           error.status === 503 || 
           error.message?.includes("500") || 
           error.status === 500 || 
+          error.message?.includes("429") || 
+          error.status === 429 || 
           error.message?.includes("overloaded") || 
           error.message?.includes("high demand") ||
+          error.message?.includes("quota") || 
+          error.message?.includes("RESOURCE_EXHAUSTED") ||
           error.message?.includes("UNAVAILABLE") ||
-          error.message?.includes("INTERNAL");
+          error.message?.includes("INTERNAL") ||
+          error.message?.includes("empty") || // Retry on empty responses
+          error.message?.includes("null");
         
         if (isRetryable && attempt < maxRetries) {
-          const delay = Math.pow(2, attempt) * 1000 + Math.random() * 1000;
+          // Faster, tighter retry timing for instant fallback with minimal jitter (500-1000ms instead of seconds)
+          const delay = 500 + Math.random() * 500;
           const nextModel = modelQueue[attempt % modelQueue.length];
           console.log(`Gemini API Retryable Error (${error.status || 'unknown'}) on ${currentModel}: "${error.message}". Retrying in ${delay.toFixed(0)}ms (attempt ${attempt}/${maxRetries}) switching to model ${nextModel}...`);
           await new Promise(resolve => setTimeout(resolve, delay));

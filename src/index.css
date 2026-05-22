@@ -1,6 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 @import "tailwindcss";
 
+@variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
@@ -8,6 +10,193 @@
 
 @layer base {
   body {
-    @apply font-sans antialiased bg-gradient-to-br from-blue-50 via-white to-blue-100 min-h-screen text-slate-800;
+    @apply font-sans antialiased bg-gradient-to-br from-blue-50 via-white to-blue-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 min-h-screen text-slate-800 dark:text-slate-100;
   }
+}
+
+/* ========================================= */
+/*       DARK MODE STYLING OVERRIDES        */
+/* ========================================= */
+
+/* Dark Mode Core Layout Rules */
+.dark body {
+  background-image: linear-gradient(to bottom right, #090d1f, #070a16, #05070e) !important;
+  color: #f8fafc !important;
+}
+
+/* Fixed side pane & workspace sections in Dark mode */
+.dark section.fixed,
+.dark .bg-slate-50,
+.dark .bg-slate-50\/50,
+.dark .bg-slate-100\/50,
+.dark .bg-slate-50\/10 {
+  background-color: #0d1527 !important;
+  border-color: #1e293b !important;
+}
+
+/* Modals, Banners & Cards */
+.dark .bg-white {
+  background-color: #0f172a !important;
+  color: #f1f5f9 !important;
+  border-color: #1e293b !important;
+}
+
+/* Border overrides */
+.dark .border-slate-200,
+.dark .border-slate-200\/80,
+.dark .border-slate-150,
+.dark .border-slate-100Border,
+.dark .border-slate-100,
+.dark .border-slate-300,
+.dark .border-pink-100,
+.dark .border-emerald-100,
+.dark .border-orange-100,
+.dark .border-violet-100 {
+  border-color: #1e293b !important;
+}
+
+/* Focus and input elements */
+.dark input,
+.dark textarea,
+.dark select {
+  background-color: #0b0f19 !important;
+  color: #f8fafc !important;
+  border-color: #1e293b !important;
+}
+.dark input:focus,
+.dark textarea:focus,
+.dark select:focus {
+  border-color: #3b82f6 !important;
+}
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #475569 !important;
+}
+
+/* Headings & Text Color Tuning */
+.dark .text-slate-900,
+.dark .text-slate-850,
+.dark .text-slate-800 {
+  color: #f8fafc !important;
+}
+.dark .text-slate-700,
+.dark .text-slate-650,
+.dark .text-slate-650,
+.dark .text-slate-600 {
+  color: #cbd5e1 !important;
+}
+.dark .text-slate-500 {
+  color: #94a3b8 !important;
+}
+.dark .text-slate-400 {
+  color: #64748b !important;
+}
+
+/* Sub-page Accent / Branded legibility updates */
+.dark .text-pink-950,
+.dark .text-pink-900,
+.dark .text-pink-800 {
+  color: #fbcfe8 !important; /* light pink font */
+}
+.dark .bg-pink-100,
+.dark .bg-pink-100\/60 {
+  background-color: rgba(244, 114, 182, 0.2) !important;
+  color: #fbcfe8 !important;
+}
+.dark .bg-pink-50,
+.dark .bg-pink-50\/30 {
+  background-color: rgba(219, 39, 119, 0.15) !important;
+}
+
+.dark .text-emerald-950,
+.dark .text-emerald-900,
+.dark .text-emerald-800 {
+  color: #a7f3d0 !important; /* light green font */
+}
+.dark .bg-emerald-100,
+.dark .bg-emerald-100\/60 {
+  background-color: rgba(52, 211, 153, 0.2) !important;
+  color: #a7f3d0 !important;
+}
+.dark .bg-emerald-50,
+.dark .bg-emerald-50\/50,
+.dark .bg-emerald-50\/30 {
+  background-color: rgba(16, 185, 129, 0.15) !important;
+}
+
+.dark .text-orange-950,
+.dark .text-orange-900,
+.dark .text-orange-800 {
+  color: #ffedd5 !important; /* light orange font */
+}
+.dark .bg-orange-100,
+.dark .bg-orange-100\/60 {
+  background-color: rgba(251, 146, 60, 0.2) !important;
+  color: #ffedd5 !important;
+}
+.dark .bg-orange-50 {
+  background-color: rgba(249, 115, 22, 0.15) !important;
+}
+
+.dark .text-violet-950,
+.dark .text-violet-900,
+.dark .text-violet-800 {
+  color: #e9d5ff !important; /* light violet font */
+}
+.dark .bg-violet-100,
+.dark .bg-violet-100\/60 {
+  background-color: rgba(167, 139, 250, 0.2) !important;
+  color: #e9d5ff !important;
+}
+.dark .bg-violet-50 {
+  background-color: rgba(124, 58, 237, 0.15) !important;
+}
+
+/* Tables in Dark mode */
+.dark table {
+  background-color: #0f172a !important;
+}
+.dark thead,
+.dark th {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+.dark tr,
+.dark td {
+  border-color: #1e293b !important;
+  color: #cbd5e1 !important;
+}
+.dark tbody tr:hover {
+  background-color: #1e293b !important;
+}
+.dark table span,
+.dark table p,
+.dark table div {
+  color: inherit;
+}
+
+/* Dropzone borders & style defaults */
+.dark .border-dashed {
+  border-color: #334155 !important;
+}
+.dark .border-dashed:hover {
+  border-color: #4f46e5 !important;
+}
+
+/* Badges for Positive, Negative, Edge Cases inside Coverage */
+.dark .bg-emerald-50.text-emerald-700 {
+  background-color: rgba(16, 185, 129, 0.2) !important;
+  color: #34d399 !important;
+  border-color: rgba(16, 185, 129, 0.4) !important;
+}
+.dark .bg-rose-50.text-rose-700 {
+  background-color: rgba(239, 68, 68, 0.2) !important;
+  color: #f87171 !important;
+  border-color: rgba(239, 68, 68, 0.4) !important;
+}
+.dark .bg-amber-50.text-amber-700 {
+  background-color: rgba(245, 158, 11, 0.2) !important;
+  color: #fbbf24 !important;
+  border-color: rgba(245, 158, 11, 0.4) !important;
 }
