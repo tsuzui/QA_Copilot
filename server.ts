@@ -87,12 +87,28 @@ async function startServer() {
       } catch (error: any) {
         attempt++;
         const errMsg = (error.message || "").toString();
+        
+        // Detect hard daily quota limit which will not succeed on rapid retry
+        const isHardQuotaExceeded = 
+          errMsg.includes("You exceeded your current quota") ||
+          errMsg.includes("GenerateRequestsPerDayPerProjectPerModel-FreeTier") ||
+          errMsg.includes("limit: 20") ||
+          errMsg.includes("daily limit");
+
+        if (isHardQuotaExceeded) {
+          console.error(`Hard quota limit reached (daily limit) on model ${currentModel}. Stopping all retries immediately.`);
+          const friendlyMessage = "Error 429 (Quota Exceeded): Anda telah melampaui batas kuota harian gratis Gemini API (Maksimal 20 request per hari). Silakan konfigurasikan API Key pribadi/berbayar di Settings > Secrets atau ganti model ke model pro lewat opsi AI Studio.";
+          return res.status(429).json({
+            error: friendlyMessage,
+            status: 429,
+            isQuotaExceeded: true
+          });
+        }
+
         const isQuotaExceeded = 
           errMsg.includes("Quota exceeded") || 
           errMsg.includes("quota exceeded") || 
           errMsg.includes("RESOURCE_EXHAUSTED") ||
-          errMsg.includes("You exceeded your current quota") ||
-          errMsg.includes("daily limit") ||
           error.status === 429;
         
         if (isQuotaExceeded) {

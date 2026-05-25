@@ -893,7 +893,9 @@ export default function App() {
       if (!response.ok) {
         const err = await response.json();
         let errorMsg = err.error || 'Gagal memanggil AI';
-        if (errorMsg.includes("503") || errorMsg.includes("500") || errorMsg.includes("high demand") || errorMsg.includes("busy")) {
+        if (response.status === 429 || errorMsg.includes("Quota") || errorMsg.includes("quota") || errorMsg.includes("limit") || errorMsg.includes("RESOURCE_EXHAUSTED")) {
+          errorMsg = "Batas kuota harian gratis Gemini API Anda telah terlampaui (maksimal 20 request per hari pada Free Tier). Silakan masuk ke menu Settings > Secrets untuk menambahkan API Key pribadi Anda dengan kuota mandiri, atau pilih upgrade / paid model flow agar dapat melanjutkan pengujian tanpa batas.";
+        } else if (errorMsg.includes("503") || errorMsg.includes("500") || errorMsg.includes("high demand") || errorMsg.includes("busy")) {
           errorMsg = "AI sedang mengalami gangguan sementara atau beban tinggi (Internal Server Error/High Demand). Kami sudah mencoba otomatis di background, silakan tunggu sejenak dan coba lagi.";
         }
         throw new Error(errorMsg);
