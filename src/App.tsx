@@ -35,7 +35,9 @@ import {
   Shield,
   Sun,
   Moon,
-  LayoutDashboard
+  LayoutDashboard,
+  Lightbulb,
+  AlertTriangle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Canvas, useFrame } from '@react-three/fiber';
@@ -612,6 +614,7 @@ export default function App() {
     improvedRequirementDraft: string;
     qaNotes: string;
   } | null>(null);
+  const [reqResultTab, setReqResultTab] = useState<'issues' | 'draft' | 'notes'>('issues');
 
   // Common UI State
   const [loading, setLoading] = useState(false);
@@ -629,6 +632,7 @@ export default function App() {
   const [editBuffer, setEditBuffer] = useState<TestCase | null>(null);
   const [resultsPage, setResultsPage] = useState(1);
   const [showHistory, setShowHistory] = useState(false);
+  const [isFromHistory, setIsFromHistory] = useState(false);
   const [inputError, setInputError] = useState<string | null>(null);
   const [historyList, setHistoryList] = useState<HistoryItem[]>(() => {
     const stored = localStorage.getItem(PREVIOUS_SESSIONS_KEY);
@@ -930,6 +934,180 @@ export default function App() {
     }
   };
 
+  const getGherkinParts = (tc: TestCase, lang: LanguageType) => {
+    const isIndo = lang === 'Indonesia';
+    
+    const cleanValue = (val?: string) => {
+      if (!val) return null;
+      const stripped = val.trim();
+      if (/^(n\/a|na|none|-|tidak ada)$/i.test(stripped)) return null;
+      return stripped;
+    };
+
+    const rawGiven = cleanValue(tc.given);
+    const rawWhen = cleanValue(tc.when);
+    const rawThen = cleanValue(tc.then);
+
+    let givenResult = rawGiven;
+    if (!givenResult) {
+      const precon = cleanValue(tc.preconditions);
+      if (precon) {
+        givenResult = precon;
+      } else {
+        givenResult = isIndo 
+          ? "Pengguna berada pada halaman utama sistem" 
+          : "User is on the main system page";
+      }
+    }
+
+    let whenResult = rawWhen;
+    if (!whenResult) {
+      if (tc.steps && tc.steps.length > 0) {
+        const firstStepClean = tc.steps[0].replace(/^(\d+\.\s*|dan\s+|and\s+|user\s+|pengguna\s+)/i, '');
+        whenResult = isIndo
+          ? `Pengguna melakukan aksi: ${firstStepClean}`
+          : `User performs action: ${firstStepClean}`;
+      } else {
+        whenResult = isIndo
+          ? `Pengguna melakukan: ${tc.title}`
+          : `User performs: ${tc.title}`;
+      }
+    }
+
+    let thenResult = rawThen;
+    if (!thenResult) {
+      const expected = cleanValue(tc.expectedResult);
+      if (expected) {
+        thenResult = expected;
+      } else {
+        thenResult = isIndo
+          ? "Sistem menampilkan hasil yang diharapkan"
+          : "System displays the expected results";
+      }
+    }
+
+    return {
+      given: givenResult,
+      when: whenResult,
+      then: thenResult
+    };
+  };
+
+  const renderOnboardingLanding = () => {
+    return (
+      <div className="max-w-4xl mx-auto px-6 py-4 text-left w-full">
+        {loading ? (
+          <div className="py-24 text-center text-slate-400 flex flex-col items-center gap-4 bg-white/60 backdrop-blur-md border border-pink-100 rounded-3xl shadow-xl w-full">
+            <div className="relative">
+              <div className="w-12 h-12 bg-pink-100 rounded-full animate-ping absolute inset-0" />
+              <Loader2 className="w-12 h-12 text-pink-600 animate-spin relative" />
+            </div>
+            <p className="text-sm text-pink-900 font-bold uppercase tracking-widest animate-pulse">Generating...</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center bg-white/70 backdrop-blur-md border border-slate-100 rounded-3xl p-6 sm:p-8 shadow-md">
+            {/* Left visual representation: Simulating Coverage Gauge */}
+            <div className="md:col-span-12 lg:col-span-5 flex flex-col items-center justify-center border-b lg:border-b-0 lg:border-r border-slate-100 pb-6 lg:pb-0 lg:pr-8">
+              <div className="relative w-36 h-36 flex items-center justify-center">
+                {/* Circular Progress track */}
+                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="40"
+                    stroke="#f1f5f9"
+                    strokeWidth="8"
+                    fill="transparent"
+                  />
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="40"
+                    stroke="#db2777"
+                    strokeWidth="8"
+                    fill="transparent"
+                    strokeDasharray="251.2"
+                    strokeDashoffset="251.2"
+                    className="opacity-20"
+                  />
+                </svg>
+                <div className="absolute flex flex-col items-center justify-center text-center">
+                  <span className="text-3xl font-black text-slate-700 tracking-tight">0%</span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Cakupan</span>
+                </div>
+              </div>
+
+              <div className="mt-5 flex flex-col items-center gap-1.5 text-center">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-200/60 shadow-xs">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                  <span className="text-[9px] font-black text-amber-700 uppercase tracking-widest">Menunggu Input</span>
+                </div>
+                <p className="text-[11px] text-slate-500 font-semibold max-w-xs leading-relaxed">
+                  Belum ada PRD aktif yang dianalisis
+                </p>
+              </div>
+            </div>
+
+            {/* Right explanatory steps & visual guide */}
+            <div className="md:col-span-12 lg:col-span-7 space-y-4">
+              <div className="space-y-1">
+                <h4 className="text-base font-black text-slate-900 flex items-center gap-2">
+                  <LayoutDashboard className="w-4 h-4 text-pink-600" />
+                  Alur Analisis & Pemetaan Kasus Uji
+                </h4>
+                <p className="text-xs text-slate-500 leading-relaxed font-normal">
+                  Masukkan dokumen PRD (.txt, .docx, .xlsx, atau ketik manual) di panel kiri. QA Copilot akan menguraikan requirement dan menterjemahkannya ke dalam skenario ideal secara otomatis.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                <div className="p-3 bg-slate-50/50 border border-slate-100 rounded-xl flex items-start gap-2.5">
+                  <div className="p-1.5 bg-pink-100/60 text-pink-600 rounded-lg">
+                    <FileText className="w-3.5 h-3.5" />
+                  </div>
+                  <div className="space-y-0.5">
+                    <p className="text-xs font-bold text-slate-800">1. Ekstraksi Otomatis</p>
+                    <p className="text-[10px] text-slate-400">Pecah draft PRD menjadi fungsional atomik.</p>
+                  </div>
+                </div>
+
+                <div className="p-3 bg-slate-50/50 border border-slate-100 rounded-xl flex items-start gap-2.5">
+                  <div className="p-1.5 bg-indigo-100/60 text-indigo-600 rounded-lg">
+                    <Shield className="w-3.5 h-3.5" />
+                  </div>
+                  <div className="space-y-0.5">
+                    <p className="text-xs font-bold text-slate-800">2. Skenario Negatif</p>
+                    <p className="text-[10px] text-slate-400">Penyusunan kasus negatif & batas error.</p>
+                  </div>
+                </div>
+
+                <div className="p-3 bg-slate-50/50 border border-slate-100 rounded-xl flex items-start gap-2.5">
+                  <div className="p-1.5 bg-amber-100/60 text-amber-700 rounded-lg">
+                    <Zap className="w-3.5 h-3.5" />
+                  </div>
+                  <div className="space-y-0.5">
+                    <p className="text-xs font-bold text-slate-800">3. Deteksi Gap</p>
+                    <p className="text-[10px] text-slate-400">Temukan sisa aspek PRD tanpa test case.</p>
+                  </div>
+                </div>
+
+                <div className="p-3 bg-slate-50/50 border border-slate-100 rounded-xl flex items-start gap-2.5">
+                  <div className="p-1.5 bg-emerald-100/60 text-emerald-600 rounded-lg">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                  </div>
+                  <div className="space-y-0.5">
+                    <p className="text-xs font-bold text-slate-800">4. Ekspor Cepat</p>
+                    <p className="text-[10px] text-slate-400">Ambil hasil dalam format XLSX, CSV, Jira.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const generateTestCases = async () => {
     const hasInput = inputMode === 'manual' ? prdText.trim() : generatorFile;
     if (!hasInput) return;
@@ -953,6 +1131,7 @@ export default function App() {
     setLoading(true);
     setGeneratorCoverage(null);
     setResults([]);
+    setIsFromHistory(false);
     try {
       let contents: any[] = [];
       let parts: any[] = [];
@@ -1026,7 +1205,7 @@ FORMAT OUTPUT: JSON sesuai schema dengan daftar test case yang komprehensif agar
             }
           }
         },
-        systemInstruction: "You are a senior Lead QA Engineer specializing in exhaustive test design and requirement traceability."
+        systemInstruction: "You are a senior Lead QA Engineer specializing in exhaustive test design and requirement traceability. CRITICAL: Be extremely concise, direct, and professional. Strictly avoid repeating words, phrases, sentences, or clauses. Focus on clear, brief statements. Every description or text field in each test case must be limited to 30 words maximum. Do not let any field loop or run on."
       });
 
       const parsed = robustJSONParse(resultData.text);
@@ -1162,7 +1341,7 @@ Return the response in the JSON schema format specified. Language: ${language}`;
               required: ["requirements"]
             }
           },
-          systemInstruction: `Anda adalah QA Director Expert. Tugas Anda adalah mengekstrak requirement fungsional yang dapat diuji (testable) secara deterministik dan terstruktur dari PRD. Language: ${language}`
+          systemInstruction: `Anda adalah QA Director Expert. Tugas Anda adalah mengekstrak requirement fungsional yang dapat diuji (testable) secara deterministik dan terstruktur dari PRD. Language: ${language}. CRITICAL: Be extremely concise. Avoid repeating words, phrases, or sentences. Limit requirement text to under 150 characters.`
         });
         
         const parsedExtraction = robustJSONParse(extractionResult.text);
@@ -1268,7 +1447,7 @@ Return response in the specified JSON schema format. Language: ${language}`;
             required: ["fullCoverageIds", "partialCoverageItems", "missingCoverageIds", "reasonsAndTestCases", "recommendations"]
           }
         },
-        systemInstruction: `Anda adalah QA Director Expert. Tugas Anda adalah memetakan ketaatan test cases terhadap daftar atomic requirements yang diberikan secara akurat dan ketat tanpa mengubah atau menambahkan requirement baru. Language: ${language}`
+        systemInstruction: `Anda adalah QA Director Expert. Tugas Anda adalah memetakan ketaatan test cases terhadap daftar atomic requirements yang diberikan secara akurat dan ketat tanpa mengubah atau menambahkan requirement baru. Language: ${language}. CRITICAL: Be extremely concise. Avoid repeating words, phrases, or sentences. Limit any reason/recommendation string values to under 150 characters.`
       });
 
       const parsedMatching = robustJSONParse(matchingResult.text);
@@ -1411,14 +1590,17 @@ Return response in the specified JSON schema format. Language: ${language}`;
                     preconditions: { type: "STRING" },
                     steps: { type: "ARRAY", items: { type: "STRING" } },
                     expectedResult: { type: "STRING" },
-                    coveredRequirement: { type: "STRING" }
+                    coveredRequirement: { type: "STRING" },
+                    given: { type: "STRING" },
+                    when: { type: "STRING" },
+                    then: { type: "STRING" }
                   }
                 }
               }
             }
           }
         },
-        systemInstruction: `QA Lead Expert. Fokus pada mengisi celah coverage (missing aspects). Language: ${language}`
+        systemInstruction: `QA Lead Expert. Fokus pada mengisi celah coverage (missing aspects). Language: ${language}. CRITICAL: Be extremely concise, direct, and professional. Strictly avoid repeating words, phrases, sentences, or clauses. Limit each field value to at most 30 words. Selalu isi field 'given', 'when', dan 'then' untuk digunakan jika dalam format Gherkin.`
       });
 
       const parsed = robustJSONParse(resultData.text);
@@ -1584,7 +1766,7 @@ The response must be strictly in ${language} language.`;
             required: ["title", "summary", "steps", "expected", "actual", "severity", "priority", "devNote"]
           }
         },
-        systemInstruction: `Anda adalah QA Lead & Bug Analysis Specialist. Tugas Anda adalah menganalisis input atau screenshot bug mentah secara cermat, membuat laporan bug terstruktur dengan Severity dan Priority yang tepat dan akurat untuk developer.`
+        systemInstruction: `Anda adalah QA Lead & Bug Analysis Specialist. Tugas Anda adalah menganalisis input atau screenshot bug mentah secara cermat, membuat laporan bug terstruktur dengan Severity dan Priority yang tepat dan akurat untuk developer. CRITICAL: Be extremely concise, direct, and professional. Strictly avoid repeating words, phrases, sentences, or clauses. Limit each field's value to at most 30 words.`
       });
 
       const parsed = robustJSONParse(resultData.text);
@@ -1840,7 +2022,7 @@ The response must be strictly in ${language} language.`;
             }
           }
         },
-        systemInstruction: `Senior Lead QA Engineer. Language: ${language}`
+        systemInstruction: `Senior Lead QA Engineer. Language: ${language}. CRITICAL: Be extremely concise, direct, and professional. Strictly avoid repeating words, phrases, sentences, or clauses. Limit each field's value to at most 30 words.`
       });
 
       const tc = robustJSONParse(resultData.text);
@@ -1925,6 +2107,7 @@ The response must be strictly in ${language} language.`;
         setActiveFilter('All');
         setSearchQuery('');
         setViewMode('results');
+        setIsFromHistory(false);
         setConfirmation(prev => ({ ...prev, show: false }));
         toast.info("Data berhasil direset!");
       }
@@ -1957,6 +2140,7 @@ The response must be strictly in ${language} language.`;
     setShowHistory(false);
     setGeneratorCoverage(null);
     setCheckerCoverage(null);
+    setIsFromHistory(true);
   };
 
   const deleteHistoryItem = (id: string) => {
@@ -2120,10 +2304,13 @@ Bahasa laporan wajib mengikuti: ${language}. Komunikasi harus ramah, formal, obj
             required: ["qualityScore", "qualityLabel", "summary", "issuesFound", "improvedRequirementDraft", "qaNotes"]
           }
         },
-        systemInstruction: "Anda adalah QA Director & Requirement Quality Analyst berpengalaman. Anda bertugas menganalisis dokumen requirement fungsional agar jelas, lengkap, bebas ambiguitas, dan sepenuhnya siap uji."
+        systemInstruction: "Anda adalah QA Director & Requirement Quality Analyst berpengalaman. Anda bertugas menganalisis dokumen requirement fungsional agar jelas, lengkap, bebas ambiguitas, dan sepenuhnya siap uji. CRITICAL: Be extremely concise, direct, and professional. Strictly avoid repeating words, phrases, sentences, or clauses. Limit each field's value to at most 30 words."
       });
 
       const parsed = robustJSONParse(resultData.text);
+      if (parsed && !Array.isArray(parsed.issuesFound)) {
+        parsed.issuesFound = [];
+      }
       setReqAnalysisResult(parsed);
 
       const titleText = reqInputMode === 'manual' 
@@ -2170,7 +2357,10 @@ Bahasa laporan wajib mengikuti: ${language}. Komunikasi harus ramah, formal, obj
       setReqText(item.reqText);
       setReqFile(null);
     }
-    setReqAnalysisResult(item.results);
+    setReqAnalysisResult({
+      ...item.results,
+      issuesFound: Array.isArray(item.results?.issuesFound) ? item.results.issuesFound : []
+    });
     setReqAnalysisError(null);
     setLanguage(item.language);
     setShowHistory(false);
@@ -2241,7 +2431,10 @@ Bahasa laporan wajib mengikuti: ${language}. Komunikasi harus ramah, formal, obj
       rows = filteredResults.map(tc => [tc.id, tc.type, tc.title, tc.steps.join('\n'), tc.expectedResult]);
     } else if (activeResultsTemplate === 'Gherkin') {
       headers = ['ID', 'Type', 'Scenario', 'Given', 'When', 'Then'];
-      rows = filteredResults.map(tc => [tc.id, tc.type, tc.title, tc.given || 'N/A', tc.when || 'N/A', tc.then || tc.expectedResult]);
+      rows = filteredResults.map(tc => {
+        const gp = getGherkinParts(tc, language);
+        return [tc.id, tc.type, tc.title, gp.given, gp.when, gp.then];
+      });
     } else if (activeResultsTemplate === 'Jira/Zephyr') {
       headers = ['ID', 'Type', 'Priority', 'Precondition', 'Title / Scenario', 'Steps', 'Expected'];
       rows = filteredResults.map(tc => [tc.id, tc.type, tc.priority, tc.preconditions || '-', tc.title, tc.steps.join('\n'), tc.expectedResult]);
@@ -2266,7 +2459,10 @@ Bahasa laporan wajib mengikuti: ${language}. Komunikasi harus ramah, formal, obj
       rows = filteredResults.map(tc => [tc.id, tc.type, tc.title, tc.steps.join('\n'), tc.expectedResult]);
     } else if (activeResultsTemplate === 'Gherkin') {
       headers = ['ID', 'Type', 'Scenario', 'Given', 'When', 'Then'];
-      rows = filteredResults.map(tc => [tc.id, tc.type, tc.title, tc.given || 'N/A', tc.when || 'N/A', tc.then || tc.expectedResult]);
+      rows = filteredResults.map(tc => {
+        const gp = getGherkinParts(tc, language);
+        return [tc.id, tc.type, tc.title, gp.given, gp.when, gp.then];
+      });
     } else if (activeResultsTemplate === 'Jira/Zephyr') {
       headers = ['ID', 'Type', 'Priority', 'Precondition', 'Title / Scenario', 'Steps', 'Expected'];
       rows = filteredResults.map(tc => [tc.id, tc.type, tc.priority, tc.preconditions || '-', tc.title, tc.steps.join('\n'), tc.expectedResult]);
@@ -3276,111 +3472,113 @@ Bahasa laporan wajib mengikuti: ${language}. Komunikasi harus ramah, formal, obj
               </div>
 
               {/* Grid Workspace */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
                 
-                {/* Left Panel: Inputs (col-span-5) */}
-                <div className="lg:col-span-5 space-y-6">
-                  <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-4">
-                    <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-                      <h3 className="text-sm font-bold text-slate-800 tracking-tight flex items-center gap-2">
-                        Audit Configuration
-                      </h3>
-                      <button 
-                        onClick={resetReqChecker}
-                        className="text-xs font-bold text-slate-400 hover:text-rose-500 transition-colors flex items-center gap-1.5"
-                      >
-                        <RefreshCw className="w-3.5 h-3.5" />
-                        Reset
-                      </button>
-                    </div>
-
-                    {/* Mode Selector */}
-                    <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200/65 shadow-inner">
-                      <button 
-                        type="button" 
-                        onClick={() => { setReqInputMode('manual'); setReqAnalysisError(null); }}
-                        className={cn(
-                          "flex-1 py-1.5 text-xs font-bold uppercase tracking-wider rounded-lg transition-all",
-                          reqInputMode === 'manual' ? "bg-white text-violet-600 shadow-sm" : "text-slate-400 hover:text-slate-600"
-                        )}
-                      >
-                        Manual Text
-                      </button>
-                      <button 
-                        type="button"
-                        onClick={() => { setReqInputMode('upload'); setReqAnalysisError(null); }}
-                        className={cn(
-                          "flex-1 py-1.5 text-xs font-bold uppercase tracking-wider rounded-lg transition-all",
-                          reqInputMode === 'upload' ? "bg-white text-violet-600 shadow-sm" : "text-slate-400 hover:text-slate-600"
-                        )}
-                      >
-                        Upload File PRD
-                      </button>
-                    </div>
-
-                    {reqInputMode === 'manual' ? (
-                      <div className="space-y-2">
-                        <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400">
-                          Paste Requirements / PRD Section
-                        </label>
-                        <textarea
-                          placeholder="Contoh: 'User harus bisa mendaftar dengan cepat dan aman menggunakan form register. Setelah mendaftar, user dikirimi email konfirmasi.'"
-                          rows={14}
-                          value={reqText}
-                          onChange={(e) => { setReqText(e.target.value); setReqAnalysisError(null); }}
-                          className="w-full text-sm font-medium bg-slate-50/50 hover:bg-slate-50 focus:bg-white border border-slate-200 focus:border-violet-500 rounded-2xl p-4 transition-all focus:outline-none placeholder-slate-400 leading-relaxed font-sans"
-                        />
+                {/* Left Panel: Inputs (col-span-12 on mobile, 5 on desktop) */}
+                <div className="lg:col-span-5 flex flex-col">
+                  <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm flex flex-col justify-between flex-1 space-y-4">
+                    <div className="space-y-4 flex-1 flex flex-col">
+                      <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
+                        <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 tracking-tight flex items-center gap-2">
+                          Audit Configuration
+                        </h3>
+                        <button 
+                          onClick={resetReqChecker}
+                          className="text-xs font-bold text-slate-400 hover:text-rose-500 transition-colors flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <RefreshCw className="w-3.5 h-3.5" />
+                          Reset
+                        </button>
                       </div>
-                    ) : (
-                      <div className="space-y-4">
-                        <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400">
-                          Upload Document File (PDF, DOCX, TXT, XLSX)
-                        </label>
-                        {reqFile ? (
-                          <div className="border border-violet-150 bg-violet-50/20 rounded-2xl p-6 relative group flex items-center gap-3">
-                            <div className="p-3 bg-violet-100 rounded-xl text-violet-600">
-                              <FileText className="w-8 h-8" />
+
+                      {/* Mode Selector */}
+                      <div className="flex bg-slate-100 dark:bg-slate-805 p-1 rounded-xl border border-slate-200/65 dark:border-slate-700/65 shadow-inner">
+                        <button 
+                          type="button" 
+                          onClick={() => { setReqInputMode('manual'); setReqAnalysisError(null); }}
+                          className={cn(
+                            "flex-1 py-1.5 text-xs font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer",
+                            reqInputMode === 'manual' ? "bg-white dark:bg-slate-705 text-violet-600 dark:text-white shadow-sm" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                          )}
+                        >
+                          Manual Text
+                        </button>
+                        <button 
+                          type="button"
+                          onClick={() => { setReqInputMode('upload'); setReqAnalysisError(null); }}
+                          className={cn(
+                            "flex-1 py-1.5 text-xs font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer",
+                            reqInputMode === 'upload' ? "bg-white dark:bg-slate-705 text-violet-600 dark:text-white shadow-sm" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                          )}
+                        >
+                          Upload File PRD
+                        </button>
+                      </div>
+
+                      {reqInputMode === 'manual' ? (
+                        <div className="space-y-2 flex-1 flex flex-col">
+                          <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400">
+                            Paste Requirements / PRD Section
+                          </label>
+                          <textarea
+                            placeholder="Contoh: 'User harus bisa mendaftar dengan cepat dan aman menggunakan form register. Setelah mendaftar, user dikirimi email konfirmasi.'"
+                            rows={reqAnalysisResult ? 5 : 12}
+                            value={reqText}
+                            onChange={(e) => { setReqText(e.target.value); setReqAnalysisError(null); }}
+                            className="w-full text-sm font-medium bg-slate-50/50 hover:bg-slate-50 focus:bg-white dark:bg-slate-950/40 dark:hover:bg-slate-950/20 border border-slate-200 dark:border-slate-800 focus:border-violet-500 rounded-2xl p-4 transition-all focus:outline-none placeholder-slate-400 dark:placeholder-slate-500 leading-relaxed font-sans resize-none flex-1"
+                          />
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400">
+                            Upload Document File (PDF, DOCX, TXT, XLSX)
+                          </label>
+                          {reqFile ? (
+                            <div className="border border-violet-150 dark:border-violet-900 bg-violet-50/20 rounded-2xl p-6 relative group flex items-center gap-3">
+                              <div className="p-3 bg-violet-100 dark:bg-violet-950 rounded-xl text-violet-600 dark:text-violet-400">
+                                <FileText className="w-8 h-8" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-bold text-sm text-slate-800 dark:text-slate-200 truncate">{reqFile.name}</h4>
+                                <p className="text-[10px] uppercase font-black text-violet-500 dark:text-violet-400 tracking-wider">File uploaded successfully</p>
+                              </div>
+                              <button 
+                                type="button"
+                                onClick={() => setReqFile(null)}
+                                className="text-slate-350 hover:text-rose-500 transition-colors p-1 cursor-pointer"
+                              >
+                                <X className="w-5 h-5" />
+                              </button>
                             </div>
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-bold text-sm text-slate-800 truncate">{reqFile.name}</h4>
-                              <p className="text-[10px] uppercase font-black text-violet-500 tracking-wider">File uploaded successfully</p>
-                            </div>
-                            <button 
-                              type="button"
-                              onClick={() => setReqFile(null)}
-                              className="text-slate-350 hover:text-rose-500 transition-colors p-1"
+                          ) : (
+                            <div 
+                              {...reqFileDropzone.getRootProps()}
+                              className="border-2 border-dashed border-slate-200 dark:border-slate-800 hover:border-violet-400 dark:hover:border-violet-500 rounded-2xl p-8 text-center cursor-pointer bg-slate-50/50 hover:bg-slate-950/20 transition-all flex flex-col items-center justify-center gap-2.5 group shadow-inner"
                             >
-                              <X className="w-5 h-5" />
-                            </button>
-                          </div>
-                        ) : (
-                          <div 
-                            {...reqFileDropzone.getRootProps()}
-                            className="border-2 border-dashed border-slate-200 hover:border-violet-400 rounded-2xl p-8 text-center cursor-pointer bg-slate-50/50 hover:bg-slate-50 transition-all flex flex-col items-center justify-center gap-2.5 group shadow-inner"
-                          >
-                            <input {...reqFileDropzone.getInputProps()} />
-                            <div className="p-4 bg-slate-100 group-hover:bg-violet-50 rounded-full text-slate-400 group-hover:text-violet-600 transition-all">
-                              <Upload className="w-6 h-6 animate-pulse" />
+                              <input {...reqFileDropzone.getInputProps()} />
+                              <div className="p-4 bg-slate-100 dark:bg-slate-800 group-hover:bg-violet-50 dark:group-hover:bg-violet-950 rounded-full text-slate-400 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-all">
+                                <Upload className="w-6 h-6 animate-pulse" />
+                              </div>
+                              <p className="font-bold text-sm text-slate-700 dark:text-slate-300">Seret file PRD Anda ke sini</p>
+                              <p className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold uppercase tracking-wider">PDF, DOCX, TXT, Excel (XLSX) hingga 10MB</p>
                             </div>
-                            <p className="font-bold text-sm text-slate-700">Seret file PRD Anda ke sini</p>
-                            <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">PDF, DOCX, TXT, Excel (XLSX) hingga 10MB</p>
-                          </div>
-                        )}
-                      </div>
-                    )}
+                          )}
+                        </div>
+                      )}
 
-                    {reqAnalysisError && (
-                      <div className="p-4 bg-rose-50 text-rose-600 border border-rose-100 rounded-2xl text-xs font-bold leading-relaxed flex items-start gap-2.5">
-                        <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                        <span>{reqAnalysisError}</span>
-                      </div>
-                    )}
+                      {reqAnalysisError && (
+                        <div className="p-4 bg-rose-50 dark:bg-rose-955/20 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/50 rounded-2xl text-xs font-bold leading-relaxed flex items-start gap-2.5">
+                          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                          <span>{reqAnalysisError}</span>
+                        </div>
+                      )}
+                    </div>
 
                     <button 
                       type="button"
                       onClick={analyzeRequirement}
                       disabled={analyzingReq || loading}
-                      className="w-full py-4 bg-violet-600 hover:bg-violet-500 text-white font-black uppercase tracking-widest text-[11px] rounded-2xl transition-all shadow-lg shadow-violet-600/20 flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 disabled:scale-100"
+                      className="w-full py-4 mt-4 bg-violet-600 hover:bg-violet-500 text-white font-black uppercase tracking-widest text-[11px] rounded-2xl transition-all shadow-lg shadow-violet-600/20 flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 disabled:scale-100 cursor-pointer"
                     >
                       {analyzingReq ? (
                         <>
@@ -3397,166 +3595,56 @@ Bahasa laporan wajib mengikuti: ${language}. Komunikasi harus ramah, formal, obj
                   </div>
                 </div>
 
-                {/* Right Panel: Analysis Results (col-span-7) */}
-                <div className="lg:col-span-7">
+                {/* Right Panel: Overview Score / Loading or Waiting Header Card (col-span-7) */}
+                <div className="lg:col-span-7 flex flex-col">
                   {analyzingReq ? (
-                    <div className="bg-white border border-slate-200/80 rounded-3xl p-12 shadow-sm text-center flex flex-col items-center justify-center gap-4 h-[550px]">
-                      <div className="w-16 h-16 bg-violet-50 rounded-full flex items-center justify-center relative text-violet-600">
-                        <Loader2 className="w-8 h-8 text-violet-600 animate-spin" />
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-12 shadow-sm text-center flex flex-col items-center justify-center gap-4 flex-1 min-h-[350px]">
+                      <div className="w-16 h-16 bg-violet-50 dark:bg-violet-950 rounded-full flex items-center justify-center relative text-violet-600 dark:text-violet-400">
+                        <Loader2 className="w-8 h-8 text-violet-600 dark:text-violet-400 animate-spin" />
                       </div>
                       <div className="space-y-1">
-                        <h3 className="font-black text-slate-800 text-base tracking-tight animate-pulse">Sedang Menjalankan Audit Kualitas...</h3>
-                        <p className="text-slate-400 text-xs font-medium max-w-xs mx-auto leading-relaxed">
+                        <h3 className="font-black text-slate-800 dark:text-slate-200 text-base tracking-tight animate-pulse">Sedang Menjalankan Audit Kualitas...</h3>
+                        <p className="text-slate-500 dark:text-slate-400 text-xs font-medium max-w-xs mx-auto leading-relaxed">
                           AI sedang membedah spesifikasi fungsional untuk mendeteksi ambiguitas, lubang alur, dan mempersiapkan arahan pengujian.
                         </p>
                       </div>
                     </div>
                   ) : reqAnalysisResult ? (
-                    <div className="space-y-6">
-                      
-                      {/* Overview Score Card */}
-                      <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
-                        <div className="md:col-span-4 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-slate-100 pb-4 md:pb-0 pr-0 md:pr-6">
-                          <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">Quality Score</label>
-                          <div className={cn(
-                            "w-24 h-24 rounded-full flex flex-col items-center justify-center border-[6px] shadow-sm relative",
-                            reqAnalysisResult.qualityLabel === 'Good' ? "border-emerald-500 text-emerald-600" :
-                            reqAnalysisResult.qualityLabel === 'Needs Improvement' ? "border-amber-500 text-amber-600" : "border-rose-500 text-rose-600"
-                          )}>
-                            <span className="text-2xl font-black">{reqAnalysisResult.qualityScore}</span>
-                            <span className="text-[9px] font-bold uppercase tracking-wider">/ 100</span>
-                          </div>
-                          <span className={cn(
-                            "mt-3 px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-full border shadow-xs",
-                            reqAnalysisResult.qualityLabel === 'Good' ? "bg-emerald-50 text-emerald-600 border-emerald-100" :
-                            reqAnalysisResult.qualityLabel === 'Needs Improvement' ? "bg-amber-50 text-amber-600 border-amber-100" : "bg-rose-50 text-rose-600 border-rose-100"
-                          )}>
-                            {reqAnalysisResult.qualityLabel}
-                          </span>
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm grid grid-cols-1 md:grid-cols-12 gap-6 items-center flex-1">
+                      <div className="md:col-span-4 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-slate-100 dark:border-slate-800 pb-4 md:pb-0 pr-0 md:pr-6">
+                        <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2">Quality Score</label>
+                        <div className={cn(
+                          "w-24 h-24 rounded-full flex flex-col items-center justify-center border-[6px] shadow-sm relative",
+                          reqAnalysisResult.qualityLabel === 'Good' ? "border-emerald-500 text-emerald-600" :
+                          reqAnalysisResult.qualityLabel === 'Needs Improvement' ? "border-amber-500 text-amber-600" : "border-rose-500 text-rose-600"
+                        )}>
+                          <span className="text-2xl font-black">{reqAnalysisResult.qualityScore}</span>
+                          <span className="text-[9px] font-bold uppercase tracking-wider">/ 100</span>
                         </div>
-                        <div className="md:col-span-8 space-y-2">
-                          <h3 className="text-sm font-bold text-slate-800 tracking-tight uppercase tracking-wider text-slate-400 text-[10px]">General Executive Summary</h3>
-                          <p className="text-slate-600 text-xs font-medium leading-relaxed font-sans">
-                            {reqAnalysisResult.summary}
-                          </p>
-                        </div>
+                        <span className={cn(
+                          "mt-3 px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-full border shadow-xs",
+                          reqAnalysisResult.qualityLabel === 'Good' ? "bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/50" :
+                          reqAnalysisResult.qualityLabel === 'Needs Improvement' ? "bg-amber-50 text-amber-600 border-amber-100 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/50" :
+                          "bg-rose-50 text-rose-600 border-rose-100 dark:bg-rose-955/20 dark:text-rose-400 dark:border-rose-900/50"
+                        )}>
+                          {reqAnalysisResult.qualityLabel}
+                        </span>
                       </div>
-
-                      {/* Issues Found */}
-                      <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-4">
-                        <div className="flex justify-between items-center border-b border-violet-50 pb-3">
-                          <h3 className="text-sm font-bold text-slate-800 tracking-tight flex items-center gap-1.5">
-                            Kelemahan Kualitas Requirement ({reqAnalysisResult.issuesFound.length})
-                          </h3>
-                        </div>
-
-                        {reqAnalysisResult.issuesFound.length === 0 ? (
-                          <div className="p-8 text-center bg-slate-50 border border-slate-150 rounded-2xl space-y-1 opacity-85">
-                            <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
-                            <h4 className="font-extrabold text-sm text-slate-700">Luar Biasa! Requirement Kokoh</h4>
-                            <p className="text-xs text-slate-400 font-medium max-w-sm mx-auto">Tidak ditemukan adanya kelemahan kualitas spesifikasi atau kalimat yang ambigu.</p>
-                          </div>
-                        ) : (
-                          <div className="space-y-4">
-                            {reqAnalysisResult.issuesFound.map((issue, idx) => (
-                              <div key={issue.id || idx} className="border border-slate-100 hover:border-slate-200 rounded-2xl p-4 bg-slate-50/30 space-y-3 shadow-xs">
-                                <div className="flex items-start justify-between flex-wrap gap-2">
-                                  <div className="flex items-center gap-2">
-                                    <span className="px-2 py-0.5 bg-slate-800 text-white rounded text-[9px] font-bold uppercase tracking-tight">
-                                      {issue.id || `ISSUE-${idx+1}`}
-                                    </span>
-                                    <span className={cn(
-                                       "px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider border shadow-2xs",
-                                       ['Ambiguous', 'Not Testable'].includes(issue.issueType) ? "bg-rose-50 text-rose-600 border-rose-100" :
-                                       ['Missing Validation', 'Missing Error Handling'].includes(issue.issueType) ? "bg-amber-50 text-amber-600 border-amber-100" :
-                                       "bg-violet-50 text-violet-600 border-violet-100"
-                                    )}>
-                                      {issue.issueType}
-                                    </span>
-                                  </div>
-                                </div>
-
-                                <div className="space-y-1.5">
-                                  <div className="text-xs font-bold text-slate-800">
-                                    Kontradiksi / Kalimat Bermasalah:
-                                  </div>
-                                  <div className="text-xs font-mono bg-rose-50/40 text-rose-700 border border-rose-100/30 p-2.5 rounded-lg line-through whitespace-pre-wrap leading-relaxed">
-                                    "{issue.requirementText}"
-                                  </div>
-                                </div>
-
-                                <div className="space-y-1 text-xs">
-                                  <div className="font-bold text-slate-800">Analisis Kelemahan:</div>
-                                  <p className="text-slate-500 font-medium leading-relaxed">{issue.explanation}</p>
-                                </div>
-
-                                <div className="space-y-1.5">
-                                  <div className="text-xs font-bold text-slate-800 flex items-center justify-between">
-                                    <span>Saran Deskripsi Baru yang Testable:</span>
-                                    <button 
-                                      onClick={() => {
-                                        navigator.clipboard.writeText(issue.suggestedRewrite);
-                                        toast.success("Saran perbaikan berhasil disalin!");
-                                      }}
-                                      className="text-[10px] font-black uppercase text-violet-500 hover:text-violet-650 tracking-wider flex items-center gap-1"
-                                    >
-                                      <Copy className="w-3 h-3" /> Copy
-                                    </button>
-                                  </div>
-                                  <div className="text-xs font-medium bg-emerald-50/40 text-emerald-800 border border-emerald-100/30 p-2.5 rounded-lg leading-relaxed font-sans mt-0.5">
-                                    {issue.suggestedRewrite}
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
+                      <div className="md:col-span-8 space-y-2">
+                        <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 tracking-tight uppercase tracking-wider text-slate-400 dark:text-slate-500 text-[10px]">General Executive Summary</h3>
+                        <p className="text-slate-650 dark:text-slate-300 text-xs font-medium leading-relaxed font-sans">
+                          {reqAnalysisResult.summary}
+                        </p>
                       </div>
-
-                      {/* Improved Draft */}
-                      <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-4">
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-100 pb-3">
-                          <h3 className="text-sm font-bold text-slate-800 tracking-tight flex items-center gap-1.5">
-                            Improved Requirement Draft
-                          </h3>
-                          <button 
-                            type="button"
-                            onClick={() => {
-                              navigator.clipboard.writeText(reqAnalysisResult.improvedRequirementDraft);
-                              toast.success("Draf requirement yang telah distandardisasi berhasil disalin!");
-                            }}
-                            className="px-3 py-1.5 bg-violet-50 border border-violet-150 rounded-xl text-[10px] font-black uppercase tracking-wider text-violet-600 hover:bg-violet-100 transition-all flex items-center gap-1.5"
-                          >
-                            <Copy className="w-3.5 h-3.5" />
-                            Copy Improved Requirement
-                          </button>
-                        </div>
-                        <div className="text-xs font-medium bg-slate-50 text-slate-755 border border-slate-150 p-4 rounded-2xl leading-relaxed whitespace-pre-wrap font-sans">
-                          {reqAnalysisResult.improvedRequirementDraft}
-                        </div>
-                      </div>
-
-                      {/* QA Notes */}
-                      <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-4">
-                        <div className="border-b border-slate-100 pb-3">
-                          <h3 className="text-sm font-bold text-slate-800 tracking-tight flex items-center gap-1.5">
-                            QA Strategic Testing Notes
-                          </h3>
-                        </div>
-                        <div className="text-xs font-medium text-slate-650 leading-relaxed whitespace-pre-wrap font-sans">
-                          {reqAnalysisResult.qaNotes}
-                        </div>
-                      </div>
-
                     </div>
                   ) : (
-                    <div className="bg-white border border-slate-200/85 rounded-3xl p-12 shadow-sm text-center flex flex-col items-center justify-center gap-4 h-[550px]">
-                      <div className="w-16 h-16 rounded-full flex items-center justify-center relative bg-violet-50 text-violet-600 select-none animate-bounce">
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-12 shadow-sm text-center flex flex-col items-center justify-center gap-4 flex-1 min-h-[350px]">
+                      <div className="w-16 h-16 rounded-full flex items-center justify-center relative bg-violet-50 dark:bg-violet-955/30 text-violet-600 dark:text-violet-400 select-none animate-bounce">
                         <ClipboardCheck className="w-8 h-8" />
                       </div>
                       <div className="space-y-1">
-                        <h3 className="font-extrabold text-slate-700 text-sm tracking-tight">Menunggu Input Analisis</h3>
-                        <p className="text-slate-400 text-xs font-medium max-w-xs mx-auto leading-relaxed">
+                        <h3 className="font-extrabold text-slate-700 dark:text-slate-300 text-sm tracking-tight">Menunggu Input Analisis</h3>
+                        <p className="text-slate-400 dark:text-slate-500 text-xs font-medium max-w-xs mx-auto leading-relaxed">
                           Masukkan requirement manual di panel kiri atau unggah file PRD yang ingin diperiksa kelengkapan kualitasnya.
                         </p>
                       </div>
@@ -3565,6 +3653,187 @@ Bahasa laporan wajib mengikuti: ${language}. Komunikasi harus ramah, formal, obj
                 </div>
 
               </div>
+
+              {/* Bottom Section: Full-Width Detail Tabs (Only when results are loaded) */}
+              {reqAnalysisResult && !analyzingReq && (
+                <div className="space-y-6 w-full animate-in fade-in slide-in-from-bottom-4 duration-300">
+                  {/* Tabs Navigation */}
+                  <div className="flex bg-slate-100 dark:bg-slate-800/40 p-1 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 shadow-inner">
+                    <button
+                      type="button"
+                      onClick={() => setReqResultTab('issues')}
+                      className={cn(
+                        "flex-1 py-1.5 sm:py-2.5 text-xs font-black uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer",
+                        reqResultTab === 'issues' 
+                          ? "bg-violet-600 text-white shadow-md shadow-violet-600/20" 
+                          : "text-slate-500 hover:text-slate-800 dark:hover:text-white"
+                      )}
+                    >
+                      <AlertTriangle className={cn("w-3.5 h-3.5", reqResultTab === 'issues' ? "text-white" : "text-slate-400")} />
+                      Kelemahan ({(reqAnalysisResult.issuesFound || []).length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setReqResultTab('draft')}
+                      className={cn(
+                        "flex-1 py-1.5 sm:py-2.5 text-xs font-black uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer",
+                        reqResultTab === 'draft' 
+                          ? "bg-violet-600 text-white shadow-md shadow-violet-600/20" 
+                          : "text-slate-500 hover:text-slate-800 dark:hover:text-white"
+                      )}
+                    >
+                      <FileText className={cn("w-3.5 h-3.5", reqResultTab === 'draft' ? "text-white" : "text-slate-400")} />
+                      Draft Baru
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setReqResultTab('notes')}
+                      className={cn(
+                        "flex-1 py-1.5 sm:py-2.5 text-xs font-black uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer",
+                        reqResultTab === 'notes' 
+                          ? "bg-violet-600 text-white shadow-md shadow-violet-600/20" 
+                          : "text-slate-500 hover:text-slate-800 dark:hover:text-white"
+                      )}
+                    >
+                      <Lightbulb className={cn("w-3.5 h-3.5", reqResultTab === 'notes' ? "text-white" : "text-slate-400")} />
+                      Strategi QA
+                    </button>
+                  </div>
+
+                  {/* Active Tab Content */}
+                  <AnimatePresence mode="wait">
+                    {reqResultTab === 'issues' && (
+                      <motion.div
+                        key="issues"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.2 }}
+                        className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-4"
+                      >
+                        <div className="flex justify-between items-center border-b border-violet-50 dark:border-slate-800 pb-3">
+                          <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 tracking-tight flex items-center gap-1.5">
+                            Kelemahan Kualitas Requirement ({(reqAnalysisResult.issuesFound || []).length})
+                          </h3>
+                        </div>
+
+                        {(!reqAnalysisResult.issuesFound || reqAnalysisResult.issuesFound.length === 0) ? (
+                          <div className="p-8 text-center bg-slate-50 dark:bg-slate-800/20 border border-slate-150 dark:border-slate-800 rounded-2xl space-y-1 opacity-85">
+                            <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
+                            <h4 className="font-extrabold text-sm text-slate-700 dark:text-slate-300">Luar Biasa! Requirement Kokoh</h4>
+                            <p className="text-xs text-slate-400 font-medium max-w-sm mx-auto">Tidak ditemukan adanya kelemahan kualitas spesifikasi atau kalimat yang ambigu.</p>
+                          </div>
+                        ) : (
+                          <div className="space-y-4">
+                            {(reqAnalysisResult.issuesFound || []).map((issue, idx) => (
+                              <div key={issue.id || idx} className="border border-slate-100 dark:border-slate-800/80 hover:border-slate-200 rounded-2xl p-4 bg-slate-50/30 dark:bg-slate-800/10 space-y-3 shadow-xs">
+                                <div className="flex items-start justify-between flex-wrap gap-2">
+                                  <div className="flex items-center gap-2">
+                                    <span className="px-2 py-0.5 bg-slate-800 text-white dark:bg-slate-700 rounded text-[9px] font-bold uppercase tracking-tight">
+                                      {issue.id || `ISSUE-${idx+1}`}
+                                    </span>
+                                    <span className={cn(
+                                      "px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider border shadow-2xs",
+                                      ['Ambiguous', 'Not Testable'].includes(issue.issueType) ? "bg-rose-50 text-rose-600 border-rose-100 dark:bg-rose-950/20 dark:text-rose-400 dark:border-rose-900/50" :
+                                      ['Missing Validation', 'Missing Error Handling'].includes(issue.issueType) ? "bg-amber-50 text-amber-600 border-amber-100 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/50" :
+                                      "bg-violet-50 text-violet-600 border-violet-100 dark:bg-violet-955/20 dark:text-violet-400 dark:border-violet-900/50"
+                                    )}>
+                                      {issue.issueType}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                <div className="space-y-1.5">
+                                  <div className="text-xs font-bold text-slate-800 dark:text-slate-300">
+                                    Kontradiksi / Kalimat Bermasalah:
+                                  </div>
+                                  <div className="text-xs font-mono bg-rose-50/40 text-rose-700 dark:bg-rose-955/10 dark:text-rose-400 border border-rose-100/30 dark:border-rose-950 p-2.5 rounded-lg line-through whitespace-pre-wrap leading-relaxed">
+                                    "{issue.requirementText}"
+                                  </div>
+                                </div>
+
+                                <div className="space-y-1 text-xs">
+                                  <div className="font-bold text-slate-800 dark:text-slate-300">Analisis Kelemahan:</div>
+                                  <p className="text-slate-500 dark:text-slate-400 font-medium leading-relaxed">{issue.explanation}</p>
+                                </div>
+
+                                <div className="space-y-1.5">
+                                  <div className="text-xs font-bold text-slate-800 dark:text-slate-300 flex items-center justify-between">
+                                    <span>Saran Deskripsi Baru yang Testable:</span>
+                                    <button 
+                                      onClick={() => {
+                                        navigator.clipboard.writeText(issue.suggestedRewrite);
+                                        toast.success("Saran perbaikan berhasil disalin!");
+                                      }}
+                                      className="text-[10px] font-black uppercase text-violet-500 hover:text-violet-650 tracking-wider flex items-center gap-1 cursor-pointer"
+                                    >
+                                      <Copy className="w-3" /> Copy
+                                    </button>
+                                  </div>
+                                  <div className="text-xs font-medium bg-emerald-50/40 text-emerald-800 dark:bg-emerald-955/10 dark:text-emerald-400 border border-emerald-100/30 dark:border-emerald-950/50 p-2.5 rounded-lg leading-relaxed font-sans mt-0.5">
+                                    {issue.suggestedRewrite}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </motion.div>
+                    )}
+
+                    {reqResultTab === 'draft' && (
+                      <motion.div
+                        key="draft"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.2 }}
+                        className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-4"
+                      >
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
+                          <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 tracking-tight flex items-center gap-1.5">
+                            Improved Requirement Draft
+                          </h3>
+                          <button 
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard.writeText(reqAnalysisResult.improvedRequirementDraft);
+                              toast.success("Draf requirement yang telah distandardisasi berhasil disalin!");
+                            }}
+                            className="px-3 py-1.5 bg-violet-50 border border-violet-150 dark:bg-violet-955/40 dark:border-violet-900 rounded-xl text-[10px] font-black uppercase tracking-wider text-violet-600 hover:bg-violet-100 transition-all flex items-center gap-1.5 cursor-pointer"
+                          >
+                            <Copy className="w-3.5 h-3.5" />
+                            Copy Improved Requirement
+                          </button>
+                        </div>
+                        <div className="text-xs font-medium bg-slate-50 dark:bg-slate-800/30 text-slate-700 dark:text-slate-300 border border-slate-150 dark:border-slate-800 p-4 rounded-2xl leading-relaxed whitespace-pre-wrap font-sans">
+                          {reqAnalysisResult.improvedRequirementDraft}
+                        </div>
+                      </motion.div>
+                    )}
+
+                    {reqResultTab === 'notes' && (
+                      <motion.div
+                        key="notes"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.2 }}
+                        className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-4"
+                      >
+                        <div className="border-b border-slate-100 dark:border-slate-800 pb-3">
+                          <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 tracking-tight flex items-center gap-1.5">
+                            QA Strategic Testing Notes
+                          </h3>
+                        </div>
+                        <div className="text-xs font-medium text-slate-650 dark:text-slate-300 leading-relaxed whitespace-pre-wrap font-sans">
+                          {reqAnalysisResult.qaNotes}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )}
             </div>
           ) : appPage === 'bug_report' ? (
             <div className="min-h-screen bg-slate-50/50 pt-24 pb-8 px-4 sm:px-6 md:px-8 flex flex-col gap-6">
@@ -3572,7 +3841,7 @@ Bahasa laporan wajib mengikuti: ${language}. Komunikasi harus ramah, formal, obj
               <div className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-9 h-9 bg-slate-900 rounded-xl flex items-center justify-center">
+                    <div className="w-9 h-9 bg-orange-600 rounded-xl flex items-center justify-center">
                       <Bug className="w-5 h-5 text-white" />
                     </div>
                     <h2 className="text-xl font-black text-slate-800 tracking-tight">Bug Report Generator</h2>
@@ -3586,10 +3855,10 @@ Bahasa laporan wajib mengikuti: ${language}. Komunikasi harus ramah, formal, obj
               {/* Grid Workspace */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                 
-                {/* Panel Kiri: Form Input */}
-                <div className="lg:col-span-5 bg-white border border-slate-200/80 rounded-3xl p-6 shadow-sm space-y-5">
+                {/* Panel Kiri: Form Input - Sticky on scroll to avoid empty space */}
+                <div className="lg:col-span-5 lg:sticky lg:top-[88px] self-start bg-white border border-slate-200/80 rounded-3xl p-6 shadow-sm space-y-5">
                   <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest border-b border-slate-100 pb-3 flex items-center gap-2">
-                    <div className="w-2 h-2 bg-slate-900 rounded-full"></div>
+                    <div className="w-2 h-2 bg-orange-600 rounded-full"></div>
                     Bug Details Form
                   </h3>
 
@@ -3602,7 +3871,7 @@ Bahasa laporan wajib mengikuti: ${language}. Komunikasi harus ramah, formal, obj
                       }}
                       className={cn(
                         "flex-1 px-4 py-2 text-[10px] sm:text-xs font-bold uppercase tracking-wider rounded-xl transition-all whitespace-nowrap text-center",
-                        bugReportMode === 'manual' ? "bg-white text-slate-950 shadow-sm" : "text-slate-400 hover:text-slate-600"
+                        bugReportMode === 'manual' ? "bg-white text-orange-600 shadow-sm font-black" : "text-slate-400 hover:text-slate-600"
                       )}
                     >
                       Manual Report
@@ -3614,7 +3883,7 @@ Bahasa laporan wajib mengikuti: ${language}. Komunikasi harus ramah, formal, obj
                       }}
                       className={cn(
                         "flex-1 px-4 py-2 text-[10px] sm:text-xs font-bold uppercase tracking-wider rounded-xl transition-all whitespace-nowrap flex items-center justify-center gap-1.5",
-                        bugReportMode === 'screenshot' ? "bg-white text-slate-950 shadow-sm" : "text-slate-400 hover:text-slate-600"
+                        bugReportMode === 'screenshot' ? "bg-white text-orange-600 shadow-sm font-black" : "text-slate-400 hover:text-slate-600"
                       )}
                     >
                       Screenshot Report
@@ -3657,7 +3926,7 @@ Bahasa laporan wajib mengikuti: ${language}. Komunikasi harus ramah, formal, obj
                           onDragOver={(e) => e.preventDefault()}
                           onDrop={handleBugScreenshotDrop}
                           onClick={() => document.getElementById('bug-screenshot-picker')?.click()}
-                          className="border-2 border-dashed border-slate-200 hover:border-slate-800 rounded-2xl p-6 text-center cursor-pointer bg-slate-50/50 hover:bg-slate-50 transition-all flex flex-col items-center justify-center gap-2 group shadow-xs"
+                          className="border-2 border-dashed border-slate-200 hover:border-orange-500 dark:hover:border-orange-400 rounded-2xl p-6 text-center cursor-pointer bg-slate-50/50 hover:bg-slate-50 dark:hover:bg-slate-900/30 transition-all flex flex-col items-center justify-center gap-2 group shadow-xs"
                         >
                           <input
                             type="file"
@@ -3666,7 +3935,7 @@ Bahasa laporan wajib mengikuti: ${language}. Komunikasi harus ramah, formal, obj
                             className="hidden"
                             onChange={handleBugScreenshotChange}
                           />
-                          <div className="p-2.5 bg-white border border-slate-100 rounded-xl text-slate-400 group-hover:text-slate-950 group-hover:border-slate-200 shadow-sm transition-colors">
+                          <div className="p-2.5 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-slate-400 dark:text-slate-500 group-hover:text-orange-600 dark:group-hover:text-orange-400 group-hover:border-orange-500/20 shadow-sm transition-colors">
                             <Upload className="w-5 h-5" />
                           </div>
                           <div className="space-y-0.5">
@@ -3695,7 +3964,7 @@ Bahasa laporan wajib mengikuti: ${language}. Komunikasi harus ramah, formal, obj
                           ? "Tulis detail temuan bug Anda di sini. Contoh: Saat mengisi password < 6 karakter, halaman tidak merespon dan spinner melingkar selamanya."
                           : "Contoh: Tombol bayar bertumpuk dengan footer saat resolusi layar mobile."
                       }
-                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs md:text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all leading-relaxed"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs md:text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 transition-all leading-relaxed"
                     />
                   </div>
 
@@ -3710,7 +3979,7 @@ Bahasa laporan wajib mengikuti: ${language}. Komunikasi harus ramah, formal, obj
                           onChange={(e) => setStepsToReproduce(e.target.value)}
                           rows={3}
                           placeholder="1. Masuk ke halaman login&#10;2. Ketik email yang valid&#10;3. Masukkan password '123'&#10;4. Klik Submit"
-                          className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs md:text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all leading-relaxed"
+                          className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs md:text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 transition-all leading-relaxed"
                         />
                       </div>
 
@@ -3723,7 +3992,7 @@ Bahasa laporan wajib mengikuti: ${language}. Komunikasi harus ramah, formal, obj
                             onChange={(e) => setExpectedResult(e.target.value)}
                             rows={3}
                             placeholder="Muncul pesan validasi 'Password minimal 6 karakter'"
-                            className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs md:text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all leading-relaxed"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs md:text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 transition-all leading-relaxed"
                           />
                         </div>
                         <div className="space-y-2">
@@ -3733,7 +4002,7 @@ Bahasa laporan wajib mengikuti: ${language}. Komunikasi harus ramah, formal, obj
                             onChange={(e) => setActualResult(e.target.value)}
                             rows={3}
                             placeholder="Sistem freeze (hang) dan tombol loading berputar tanpa henti"
-                            className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs md:text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all leading-relaxed"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs md:text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 transition-all leading-relaxed"
                           />
                         </div>
                       </div>
@@ -3746,7 +4015,7 @@ Bahasa laporan wajib mengikuti: ${language}. Komunikasi harus ramah, formal, obj
                           value={bugEnvironment}
                           onChange={(e) => setBugEnvironment(e.target.value)}
                           placeholder="Contoh: Chrome 125, macOS Sonoma, iPhone 15 Pro"
-                          className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs md:text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+                          className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs md:text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 transition-all"
                         />
                       </div>
 
@@ -3757,7 +4026,7 @@ Bahasa laporan wajib mengikuti: ${language}. Komunikasi harus ramah, formal, obj
                           <select
                             value={bugSeverity}
                             onChange={(e) => setBugSeverity(e.target.value)}
-                            className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs md:text-sm font-bold text-slate-700 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all cursor-pointer"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs md:text-sm font-bold text-slate-700 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 transition-all cursor-pointer"
                           >
                             <option value="Blocker">Blocker</option>
                             <option value="Critical">Critical</option>
@@ -3771,7 +4040,7 @@ Bahasa laporan wajib mengikuti: ${language}. Komunikasi harus ramah, formal, obj
                           <select
                             value={bugPriority}
                             onChange={(e) => setBugPriority(e.target.value)}
-                            className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs md:text-sm font-bold text-slate-700 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all cursor-pointer"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs md:text-sm font-bold text-slate-700 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 transition-all cursor-pointer"
                           >
                             <option value="High">High</option>
                             <option value="Medium">Medium</option>
@@ -3791,7 +4060,7 @@ Bahasa laporan wajib mengikuti: ${language}. Komunikasi harus ramah, formal, obj
                             onChange={(e) => setExpectedResult(e.target.value)}
                             rows={2}
                             placeholder="Tata letak tombol responsif dan sejajar"
-                            className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs md:text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all leading-relaxed"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs md:text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 transition-all leading-relaxed"
                           />
                         </div>
                         <div className="space-y-2">
@@ -3801,7 +4070,7 @@ Bahasa laporan wajib mengikuti: ${language}. Komunikasi harus ramah, formal, obj
                             onChange={(e) => setActualResult(e.target.value)}
                             rows={2}
                             placeholder="Tombol overlap di belakang footer panel"
-                            className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs md:text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all leading-relaxed"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs md:text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 transition-all leading-relaxed"
                           />
                         </div>
                       </div>
@@ -3814,7 +4083,7 @@ Bahasa laporan wajib mengikuti: ${language}. Komunikasi harus ramah, formal, obj
                           value={bugEnvironment}
                           onChange={(e) => setBugEnvironment(e.target.value)}
                           placeholder="Firefox 126, Windows 11"
-                          className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs md:text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+                          className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs md:text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 transition-all"
                         />
                       </div>
                     </>
@@ -3833,7 +4102,7 @@ Bahasa laporan wajib mengikuti: ${language}. Komunikasi harus ramah, formal, obj
                     <button
                       onClick={handleGenerateBugReport}
                       disabled={isGeneratingBugReport}
-                      className="flex-1 bg-slate-900 hover:bg-slate-800 text-white font-bold py-3.5 rounded-2xl transition-all shadow-lg shadow-slate-900/25 flex items-center justify-center gap-2 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 text-[10px] uppercase tracking-widest"
+                      className="flex-1 bg-orange-600 hover:bg-orange-500 hover:border-orange-400 dark:bg-orange-600 dark:hover:bg-orange-500 text-white font-bold py-3.5 rounded-2xl transition-all shadow-lg shadow-orange-600/25 flex items-center justify-center gap-2 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 text-[10px] uppercase tracking-widest"
                     >
                       {isGeneratingBugReport ? (
                         <>
@@ -3855,8 +4124,8 @@ Bahasa laporan wajib mengikuti: ${language}. Komunikasi harus ramah, formal, obj
                   {isGeneratingBugReport ? (
                     <div className="flex-1 flex flex-col items-center justify-center py-20 px-6 space-y-6">
                       <div className="relative">
-                        <div className="w-16 h-16 border-4 border-slate-100 border-t-slate-800 rounded-full animate-spin"></div>
-                        <Bug className="w-6 h-6 text-slate-800 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-pulse" />
+                        <div className="w-16 h-16 border-4 border-slate-100 dark:border-slate-800 border-t-orange-600 rounded-full animate-spin"></div>
+                        <Bug className="w-6 h-6 text-orange-600 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-pulse" />
                       </div>
                       <div className="space-y-1 text-center">
                         <h3 className="text-sm font-bold text-slate-800 tracking-tight">Structured Bug Report AI Generator</h3>
@@ -4027,8 +4296,8 @@ Bahasa laporan wajib mengikuti: ${language}. Komunikasi harus ramah, formal, obj
                     </div>
                   ) : (
                     <div className="flex-1 flex flex-col items-center justify-center text-center py-20 px-6 space-y-4">
-                      <div className="w-16 h-16 bg-slate-55 rounded-2xl flex items-center justify-center shadow-xs">
-                        <Bug className="w-8 h-8 text-slate-300" />
+                      <div className="w-16 h-16 bg-orange-500/10 rounded-2xl flex items-center justify-center shadow-xs">
+                        <Bug className="w-8 h-8 text-orange-500 dark:text-orange-400" />
                       </div>
                       <div className="space-y-1.5">
                         <h3 className="text-sm font-bold text-slate-700 tracking-tight">Menunggu Input Laporan</h3>
@@ -4571,17 +4840,18 @@ Bahasa laporan wajib mengikuti: ${language}. Komunikasi harus ramah, formal, obj
               ) : (
                 /* Test Case Generator Flow */
                 <div className="flex flex-col gap-10">
-                  {/* Table Section */}
-                  <div className="flex flex-col gap-4">
-                    <div className="bg-white/60 backdrop-blur-md border border-pink-100 rounded-3xl overflow-hidden shadow-xl flex flex-col">
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse table-auto">
-                          <thead>
-                            <TestCaseTableHeader template={activeResultsTemplate} theme="pink" />
-                          </thead>
-                          <tbody className="divide-y divide-pink-50">
-                            <AnimatePresence mode="popLayout">
-                              {paginatedResults.length > 0 ? (
+                  {results.length > 0 ? (
+                    /* Table Section */
+                    <div className="flex flex-col gap-4">
+                      <div className="bg-white/60 backdrop-blur-md border border-pink-100 rounded-3xl overflow-hidden shadow-xl flex flex-col">
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-left border-collapse table-auto">
+                            <thead>
+                              <TestCaseTableHeader template={activeResultsTemplate} theme="pink" />
+                            </thead>
+                            <tbody className="divide-y divide-pink-50">
+                              <AnimatePresence mode="popLayout">
+                                {paginatedResults.length > 0 ? (
                                 paginatedResults.map((tc, idx) => {
                                   const isEditing = editingId === tc.id;
                                   const data = isEditing ? editBuffer! : tc;
@@ -4647,30 +4917,33 @@ Bahasa laporan wajib mengikuti: ${language}. Komunikasi harus ramah, formal, obj
                                       )}
 
                                       {/* Gherkin Template Rows */}
-                                      {activeResultsTemplate === 'Gherkin' && (
-                                        <>
-                                          <td className="px-6 py-4">
-                                            {isEditing ? (
-                                              <input className="w-full p-1 border rounded font-bold" value={data.title} onChange={e => setEditBuffer({...data, title: e.target.value})} />
-                                            ) : <div className="font-bold text-slate-800">{tc.title}</div>}
-                                          </td>
-                                          <td className="px-6 py-4 italic text-slate-600">
-                                            {isEditing ? (
-                                              <textarea className="w-full p-1 border rounded text-xs" value={data.given} onChange={e => setEditBuffer({...data, given: e.target.value})} />
-                                            ) : <>Given {tc.given || 'N/A'}</>}
-                                          </td>
-                                          <td className="px-6 py-4 italic text-slate-600">
-                                            {isEditing ? (
-                                              <textarea className="w-full p-1 border rounded text-xs" value={data.when} onChange={e => setEditBuffer({...data, when: e.target.value})} />
-                                            ) : <>When {tc.when || 'N/A'}</>}
-                                          </td>
-                                          <td className="px-6 py-4 italic font-medium text-pink-700">
-                                            {isEditing ? (
-                                              <textarea className="w-full p-1 border rounded text-xs bg-white" value={data.then || data.expectedResult} onChange={e => setEditBuffer({...data, then: e.target.value})} />
-                                            ) : <>Then {tc.then || tc.expectedResult}</>}
-                                          </td>
-                                        </>
-                                      )}
+                                      {activeResultsTemplate === 'Gherkin' && (() => {
+                                        const gp = getGherkinParts(tc, language);
+                                        return (
+                                          <>
+                                            <td className="px-6 py-4">
+                                              {isEditing ? (
+                                                <input className="w-full p-1 border rounded font-bold" value={data.title} onChange={e => setEditBuffer({...data, title: e.target.value})} />
+                                              ) : <div className="font-bold text-slate-800">{tc.title}</div>}
+                                            </td>
+                                            <td className="px-6 py-4 italic text-slate-600">
+                                              {isEditing ? (
+                                                <textarea className="w-full p-1 border rounded text-xs" value={data.given} onChange={e => setEditBuffer({...data, given: e.target.value})} />
+                                              ) : <>Given {gp.given}</>}
+                                            </td>
+                                            <td className="px-6 py-4 italic text-slate-600">
+                                              {isEditing ? (
+                                                <textarea className="w-full p-1 border rounded text-xs" value={data.when} onChange={e => setEditBuffer({...data, when: e.target.value})} />
+                                              ) : <>When {gp.when}</>}
+                                            </td>
+                                            <td className="px-6 py-4 italic font-medium text-pink-700">
+                                              {isEditing ? (
+                                                <textarea className="w-full p-1 border rounded text-xs bg-white" value={data.then || data.expectedResult} onChange={e => setEditBuffer({...data, then: e.target.value})} />
+                                              ) : <>Then {gp.then}</>}
+                                            </td>
+                                          </>
+                                        );
+                                      })()}
 
                                       {/* Jira/Zephyr Template Rows */}
                                       {activeResultsTemplate === 'Jira/Zephyr' && (
@@ -4794,105 +5067,22 @@ Bahasa laporan wajib mengikuti: ${language}. Komunikasi harus ramah, formal, obj
                                         <p className="text-sm text-pink-900 font-bold uppercase tracking-widest animate-pulse">Generating...</p>
                                       </div>
                                     ) : (
-                                      <div className="max-w-4xl mx-auto px-6 py-12 text-left">
-                                        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center bg-white border border-slate-100 rounded-2xl p-6 sm:p-8 shadow-sm">
-                                          {/* Left visual representation: Simulating Coverage Gauge */}
-                                          <div className="md:col-span-5 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-slate-100 pb-6 md:pb-0 md:pr-8">
-                                            <div className="relative w-36 h-36 flex items-center justify-center">
-                                              {/* Circular Progress track */}
-                                              <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                                                <circle
-                                                  cx="50"
-                                                  cy="50"
-                                                  r="40"
-                                                  stroke="#f1f5f9"
-                                                  strokeWidth="8"
-                                                  fill="transparent"
-                                                />
-                                                <circle
-                                                  cx="50"
-                                                  cy="50"
-                                                  r="40"
-                                                  stroke="#db2777"
-                                                  strokeWidth="8"
-                                                  fill="transparent"
-                                                  strokeDasharray="251.2"
-                                                  strokeDashoffset="251.2"
-                                                  className="opacity-20"
-                                                />
-                                              </svg>
-                                              <div className="absolute flex flex-col items-center justify-center text-center">
-                                                <span className="text-3xl font-black text-slate-700 tracking-tight">0%</span>
-                                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Cakupan</span>
-                                              </div>
-                                            </div>
-
-                                            <div className="mt-5 flex flex-col items-center gap-1.5 text-center">
-                                              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-200/60 shadow-xs">
-                                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                                                <span className="text-[9px] font-black text-amber-700 uppercase tracking-widest">Menunggu Input</span>
-                                              </div>
-                                              <p className="text-[11px] text-slate-500 font-semibold max-w-xs leading-relaxed">
-                                                Belum ada PRD aktif yang dianalisis
-                                              </p>
-                                            </div>
-                                          </div>
-
-                                          {/* Right explanatory steps & visual guide */}
-                                          <div className="md:col-span-7 space-y-4">
-                                            <div className="space-y-1">
-                                              <h4 className="text-base font-black text-slate-900 flex items-center gap-2">
-                                                <LayoutDashboard className="w-4 h-4 text-pink-600" />
-                                                Alur Analisis & Pemetaan Kasus Uji
-                                              </h4>
-                                              <p className="text-xs text-slate-500 leading-relaxed font-normal">
-                                                Masukkan dokumen PRD (.txt, .docx, .xlsx, atau ketik manual) di panel kiri. QA Copilot akan menguraikan requirement dan menterjemahkannya ke dalam skenario ideal secara otomatis.
-                                              </p>
-                                            </div>
-
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                                              <div className="p-3 bg-slate-50/50 border border-slate-100 rounded-xl flex items-start gap-2.5">
-                                                <div className="p-1.5 bg-pink-100/60 text-pink-600 rounded-lg">
-                                                  <FileText className="w-3.5 h-3.5" />
-                                                </div>
-                                                <div className="space-y-0.5">
-                                                  <p className="text-xs font-bold text-slate-800">1. Ekstraksi Otomatis</p>
-                                                  <p className="text-[10px] text-slate-400">Pecah draft PRD menjadi atomic fungsional.</p>
-                                                </div>
-                                              </div>
-
-                                              <div className="p-3 bg-slate-50/50 border border-slate-100 rounded-xl flex items-start gap-2.5">
-                                                <div className="p-1.5 bg-indigo-100/60 text-indigo-600 rounded-lg">
-                                                  <Shield className="w-3.5 h-3.5" />
-                                                </div>
-                                                <div className="space-y-0.5">
-                                                  <p className="text-xs font-bold text-slate-800">2. Skenario Negatif</p>
-                                                  <p className="text-[10px] text-slate-400">Penyusunan kasus negatif & batas error.</p>
-                                                </div>
-                                              </div>
-
-                                              <div className="p-3 bg-slate-50/50 border border-slate-100 rounded-xl flex items-start gap-2.5">
-                                                <div className="p-1.5 bg-amber-100/60 text-amber-700 rounded-lg">
-                                                  <Zap className="w-3.5 h-3.5" />
-                                                </div>
-                                                <div className="space-y-0.5">
-                                                  <p className="text-xs font-bold text-slate-800">3. Deteksi Gap</p>
-                                                  <p className="text-[10px] text-slate-400">Temukan sisa aspek PRD tanpa test case.</p>
-                                                </div>
-                                              </div>
-
-                                              <div className="p-3 bg-slate-50/50 border border-slate-100 rounded-xl flex items-start gap-2.5">
-                                                <div className="p-1.5 bg-emerald-100/60 text-emerald-600 rounded-lg">
-                                                  <CheckCircle2 className="w-3.5 h-3.5" />
-                                                </div>
-                                                <div className="space-y-0.5">
-                                                  <p className="text-xs font-bold text-slate-800">4. Export Cepat</p>
-                                                  <p className="text-[10px] text-slate-400">Ambil hasil dalam format XLSX, DOCX, CSV.</p>
-                                                </div>
-                                              </div>
-                                            </div>
-                                          </div>
+                                      <div className="py-24 text-center flex flex-col items-center justify-center gap-4 bg-white/40 border border-t-0 border-pink-100/50">
+                                        <div className="w-16 h-16 bg-pink-50 rounded-full flex items-center justify-center border border-pink-200">
+                                          <Search className="w-6 h-6 text-pink-400" />
                                         </div>
+                                        <div className="space-y-1">
+                                          <h4 className="font-extrabold text-slate-700 text-sm">Tidak Ada Skenario Uji</h4>
+                                          <p className="text-xs text-slate-500 max-w-sm leading-relaxed mx-auto flex-wrap">
+                                            Tidak menemukan test case untuk kategori <span className="font-bold text-pink-600">"{activeFilter}"</span>{searchQuery ? ` atau pencarian "${searchQuery}"` : ""}. Silakan ubah filter atau bersihkan kata kunci pencarian.
+                                          </p>
+                                        </div>
+                                        <button 
+                                          onClick={() => { setActiveFilter('All'); setSearchQuery(''); }}
+                                          className="px-4 py-1.5 bg-pink-100 border border-pink-200 text-pink-700 text-xs font-black rounded-lg transition-all active:scale-95 shadow-xs"
+                                        >
+                                          Reset Filter & Pencarian
+                                        </button>
                                       </div>
                                     )}
                                   </td>
@@ -4925,9 +5115,11 @@ Bahasa laporan wajib mengikuti: ${language}. Komunikasi harus ramah, formal, obj
                         </div>
                       </div>
                     </div>
+                  </div>
+                ) : renderOnboardingLanding()}
 
                     {/* Action Button: Cek Coverage Hasil Generate */}
-                    {inputMode === 'upload' && results.length > 0 && !generatorCoverage && (
+                    {inputMode === 'upload' && results.length > 0 && !generatorCoverage && !isFromHistory && (
                       <div className="flex justify-center">
                          <button 
                           onClick={() => checkCoverage()}
@@ -4939,7 +5131,6 @@ Bahasa laporan wajib mengikuti: ${language}. Komunikasi harus ramah, formal, obj
                          </button>
                       </div>
                     )}
-                  </div>
 
                   {/* Coverage Section for Generator (shows below table) */}
                   {generatorCoverage && (
@@ -5088,14 +5279,17 @@ Bahasa laporan wajib mengikuti: ${language}. Komunikasi harus ramah, formal, obj
                                         </>
                                       )}
 
-                                      {activeResultsTemplate === 'Gherkin' && (
-                                        <>
-                                          <td className="px-6 py-4 font-bold text-slate-800">{tc.title}</td>
-                                          <td className="px-6 py-4 italic text-slate-600">Given {tc.given || 'N/A'}</td>
-                                          <td className="px-6 py-4 italic text-slate-600">When {tc.when || 'N/A'}</td>
-                                          <td className="px-6 py-4 italic font-medium text-amber-700">Then {tc.then || tc.expectedResult}</td>
-                                        </>
-                                      )}
+                                      {activeResultsTemplate === 'Gherkin' && (() => {
+                                        const gp = getGherkinParts(tc, language);
+                                        return (
+                                          <>
+                                            <td className="px-6 py-4 font-bold text-slate-800">{tc.title}</td>
+                                            <td className="px-6 py-4 italic text-slate-600">Given {gp.given}</td>
+                                            <td className="px-6 py-4 italic text-slate-600">When {gp.when}</td>
+                                            <td className="px-6 py-4 italic font-medium text-amber-700">Then {gp.then}</td>
+                                          </>
+                                        );
+                                      })()}
 
                                       {activeResultsTemplate === 'Jira/Zephyr' && (
                                         <>
@@ -5265,7 +5459,7 @@ Bahasa laporan wajib mengikuti: ${language}. Komunikasi harus ramah, formal, obj
                         </div>
                         <h4 className="font-bold text-sm text-slate-800 truncate mb-1 pr-8">{item.title}</h4>
                         <p className="text-[11px] text-slate-500 truncate">
-                          Rating: {item.results.qualityLabel} • {item.results.issuesFound.length} Isu
+                          Rating: {item.results?.qualityLabel || 'N/A'} • {(item.results?.issuesFound || []).length} Isu
                         </p>
                       </div>
                     ))

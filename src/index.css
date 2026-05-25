@@ -147,8 +147,8 @@
 .dark input:focus,
 .dark textarea:focus,
 .dark select:focus {
-  border-color: #6366f1 !important;
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15) !important;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
 }
 .dark input::placeholder,
 .dark textarea::placeholder {

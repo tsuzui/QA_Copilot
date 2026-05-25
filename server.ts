@@ -37,9 +37,9 @@ async function startServer() {
     const maxRetries = 5;
     let attempt = 0;
     const initialModel = req.body.modelConfig?.model || "gemini-3.5-flash";
-    const fallbackModels = ["gemini-3.5-flash", "gemini-3.1-flash-lite"];
+    const fallbackModels = ["gemini-3.5-flash", "gemini-3.1-flash-lite", "gemini-flash-latest"];
     // Create a unique queue starting with the requested/detected model
-    const modelQueue = Array.from(new Set([initialModel, ...fallbackModels]));
+    let modelQueue = Array.from(new Set([initialModel, ...fallbackModels]));
     
     const executeGeneration = async (modelName: string) => {
       const { contents, modelConfig, systemInstruction } = req.body;
@@ -62,6 +62,10 @@ async function startServer() {
     };
 
     while (attempt < maxRetries) {
+      if (modelQueue.length === 0) {
+        console.error("No models remaining in the model queue.");
+        break;
+      }
       const currentModel = modelQueue[attempt % modelQueue.length];
       try {
         const response = await executeGeneration(currentModel);
@@ -82,6 +86,20 @@ async function startServer() {
         return res.json({ text: cleanedText });
       } catch (error: any) {
         attempt++;
+        const errMsg = (error.message || "").toString();
+        const isQuotaExceeded = 
+          errMsg.includes("Quota exceeded") || 
+          errMsg.includes("quota exceeded") || 
+          errMsg.includes("RESOURCE_EXHAUSTED") ||
+          errMsg.includes("You exceeded your current quota") ||
+          errMsg.includes("daily limit") ||
+          error.status === 429;
+        
+        if (isQuotaExceeded) {
+          console.log(`Model ${currentModel} hit a rate/quota limit. Removing from queue to stop wasting retry attempts.`);
+          modelQueue = modelQueue.filter(m => m !== currentModel);
+        }
+
         const isRetryable = 
           error.message?.includes("503") || 
           error.status === 503 || 
@@ -96,9 +114,10 @@ async function startServer() {
           error.message?.includes("UNAVAILABLE") ||
           error.message?.includes("INTERNAL") ||
           error.message?.includes("empty") || // Retry on empty responses
-          error.message?.includes("null");
+          error.message?.includes("null") ||
+          isQuotaExceeded;
         
-        if (isRetryable && attempt < maxRetries) {
+        if (isRetryable && attempt < maxRetries && modelQueue.length > 0) {
           // Faster, tighter retry timing for instant fallback with minimal jitter (500-1000ms instead of seconds)
           const delay = 500 + Math.random() * 500;
           const nextModel = modelQueue[attempt % modelQueue.length];
