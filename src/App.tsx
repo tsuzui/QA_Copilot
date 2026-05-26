@@ -752,7 +752,7 @@ export default function App() {
       setGeneratorFile(processed);
       setInputError(null);
     } catch (error) {
-      alert("Gagal memproses PRD.");
+      alert("Failed to process PRD.");
     } finally {
       setLoading(false);
     }
@@ -763,9 +763,9 @@ export default function App() {
     try {
       const processedArray = await Promise.all(acceptedFiles.map(file => processImage(file)));
       setGeneratorImages(prev => [...prev, ...processedArray]);
-      toast.success(`${acceptedFiles.length} screenshot berhasil diunggah.`);
+      toast.success(`${acceptedFiles.length} screenshots uploaded successfully.`);
     } catch (error) {
-      toast.error("Gagal memproses gambar.");
+      toast.error("Failed to process image.");
     } finally {
       setLoading(false);
     }
@@ -784,7 +784,7 @@ export default function App() {
       setCheckerPrdFile(processed);
       setInputError(null);
     } catch (error) {
-      alert("Gagal memproses PRD.");
+      alert("Failed to process PRD.");
     } finally {
       setLoading(false);
     }
@@ -799,7 +799,7 @@ export default function App() {
       setCheckerTestCaseFile(processed);
       setInputError(null);
     } catch (error) {
-      alert("Gagal memproses file Test Case.");
+      alert("Failed to process Test Case file.");
     } finally {
       setLoading(false);
     }
@@ -813,9 +813,9 @@ export default function App() {
     try {
       const processed = await processFile(file);
       setReqFile(processed);
-      toast.success(`File PRD "${file.name}" berhasil diunggah.`);
+      toast.success(`PRD file "${file.name}" uploaded successfully.`);
     } catch (error) {
-      toast.error("Gagal memproses file PRD.");
+      toast.error("Failed to process PRD file.");
     } finally {
       setLoading(false);
     }
@@ -892,18 +892,18 @@ export default function App() {
       });
       if (!response.ok) {
         const err = await response.json();
-        let errorMsg = err.error || 'Gagal memanggil AI';
+        let errorMsg = err.error || 'Failed to connect to AI';
         if (response.status === 429 || errorMsg.includes("Quota") || errorMsg.includes("quota") || errorMsg.includes("limit") || errorMsg.includes("RESOURCE_EXHAUSTED")) {
-          errorMsg = "Batas kuota harian gratis Gemini API Anda telah terlampaui (maksimal 20 request per hari pada Free Tier). Silakan masuk ke menu Settings > Secrets untuk menambahkan API Key pribadi Anda dengan kuota mandiri, atau pilih upgrade / paid model flow agar dapat melanjutkan pengujian tanpa batas.";
+          errorMsg = "Your free daily Gemini API quota has been exceeded. Please go to Settings > Secrets to configure your own Gemini API Key, or select our paid model flow to continue testing without limits.";
         } else if (errorMsg.includes("503") || errorMsg.includes("500") || errorMsg.includes("high demand") || errorMsg.includes("busy")) {
-          errorMsg = "AI sedang mengalami gangguan sementara atau beban tinggi (Internal Server Error/High Demand). Kami sudah mencoba otomatis di background, silakan tunggu sejenak dan coba lagi.";
+          errorMsg = "The AI service is temporarily overloaded or experiencing high demand (Internal Server Error). We've attempted auto-retries in the background, please wait a moment and try again.";
         }
         throw new Error(errorMsg);
       }
       return response.json();
     } catch (error: any) {
       if (error.message.includes("Failed to fetch")) {
-        throw new Error("Koneksi ke server terputus. Pastikan internet Anda stabil.");
+        throw new Error("Connection to server was lost. Please check your internet connection.");
       }
       throw error;
     }
@@ -1036,17 +1036,17 @@ export default function App() {
                 </svg>
                 <div className="absolute flex flex-col items-center justify-center text-center">
                   <span className="text-3xl font-black text-slate-700 dark:text-slate-200 tracking-tight">0%</span>
-                  <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Cakupan</span>
+                  <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Coverage</span>
                 </div>
               </div>
 
               <div className="mt-5 flex flex-col items-center gap-1.5 text-center">
                 <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/50 shadow-xs">
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                  <span className="text-[9px] font-black text-amber-700 dark:text-amber-400 uppercase tracking-widest">Menunggu Input</span>
+                  <span className="text-[9px] font-black text-amber-700 dark:text-amber-400 uppercase tracking-widest">Waiting for Input</span>
                 </div>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold max-w-xs leading-relaxed">
-                  Belum ada PRD aktif yang dianalisis
+                  No active PRD analyzed yet
                 </p>
               </div>
             </div>
@@ -1056,10 +1056,10 @@ export default function App() {
               <div className="space-y-1">
                 <h4 className="text-base font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
                   <LayoutDashboard className="w-4 h-4 text-pink-600 dark:text-pink-400" />
-                  Alur Analisis & Pemetaan Kasus Uji
+                  Analysis Flow & Test Case Mapping
                 </h4>
                 <p className="text-xs text-slate-500 dark:text-slate-450 leading-relaxed font-normal">
-                  Masukkan dokumen PRD (.txt, .docx, .xlsx, atau ketik manual) di panel kiri. QA Copilot akan menguraikan requirement dan menterjemahkannya ke dalam skenario ideal secara otomatis.
+                  Enter PRD documents (.txt, .docx, .xlsx, or manual text) in the left panel. QA Copilot will automatically parse requirements and map them to ideal test scenarios.
                 </p>
               </div>
 
@@ -1069,8 +1069,8 @@ export default function App() {
                     <FileText className="w-3.5 h-3.5" />
                   </div>
                   <div className="space-y-0.5">
-                    <p className="text-xs font-bold text-slate-800 dark:text-slate-200">1. Ekstraksi Otomatis</p>
-                    <p className="text-[10px] text-slate-400 dark:text-slate-500">Pecah draft PRD menjadi fungsional atomik.</p>
+                    <p className="text-xs font-bold text-slate-800 dark:text-slate-200">1. Automatic Extraction</p>
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500">Break draft PRD down into atomic functionalities.</p>
                   </div>
                 </div>
 
@@ -1079,8 +1079,8 @@ export default function App() {
                     <Shield className="w-3.5 h-3.5" />
                   </div>
                   <div className="space-y-0.5">
-                    <p className="text-xs font-bold text-slate-800 dark:text-slate-200">2. Skenario Negatif</p>
-                    <p className="text-[10px] text-slate-400 dark:text-slate-500">Penyusunan kasus negatif & batas error.</p>
+                    <p className="text-xs font-bold text-slate-800 dark:text-slate-200">2. Negative Cases</p>
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500">Drafting negative cases & boundary testing.</p>
                   </div>
                 </div>
 
@@ -1089,8 +1089,8 @@ export default function App() {
                     <Zap className="w-3.5 h-3.5" />
                   </div>
                   <div className="space-y-0.5">
-                    <p className="text-xs font-bold text-slate-800 dark:text-slate-200">3. Deteksi Gap</p>
-                    <p className="text-[10px] text-slate-400 dark:text-slate-500">Temukan sisa aspek PRD tanpa test case.</p>
+                    <p className="text-xs font-bold text-slate-800 dark:text-slate-200">3. Gap Detection</p>
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500">Find requirement aspects that lack test cases.</p>
                   </div>
                 </div>
 
@@ -1099,8 +1099,8 @@ export default function App() {
                     <CheckCircle2 className="w-3.5 h-3.5" />
                   </div>
                   <div className="space-y-0.5">
-                    <p className="text-xs font-bold text-slate-800 dark:text-slate-200">4. Ekspor Cepat</p>
-                    <p className="text-[10px] text-slate-400 dark:text-slate-500">Ambil hasil dalam format XLSX, CSV, Jira.</p>
+                    <p className="text-xs font-bold text-slate-800 dark:text-slate-200">4. Fast Export</p>
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500">Get results in XLSX, CSV, or Jira formats.</p>
                   </div>
                 </div>
               </div>
@@ -1803,11 +1803,11 @@ Detect the dominant language of the user input and respond using the same langua
         return updated;
       });
 
-      toast.success("Bug Report berhasil digenerate!");
+      toast.success("Bug Report generated successfully!");
     } catch (err: any) {
       console.error(err);
-      setBugReportError(err.message || "Gagal membuat laporan bug. Silakan coba lagi.");
-      toast.error("Gagal men-generate Bug Report.");
+      setBugReportError(err.message || "Failed to generate bug report. Please try again.");
+      toast.error("Failed to generate Bug Report.");
     } finally {
       setIsGeneratingBugReport(false);
     }
@@ -1824,7 +1824,7 @@ Detect the dominant language of the user input and respond using the same langua
     setBugScreenshot(null);
     setGeneratedBugReport(null);
     setBugReportError(null);
-    toast.info("Form berhasil direset!");
+    toast.info("Form reset successfully!");
   };
 
   const getBugReportMarkdown = (report: any) => {
@@ -1896,9 +1896,9 @@ Detect the dominant language of the user input and respond using the same langua
       const processed = await processImage(file);
       setBugScreenshot(processed);
       setBugReportError(null);
-      toast.success("Screenshot berhasil diunggah!");
+      toast.success("Screenshot uploaded successfully!");
     } catch (err) {
-      toast.error("Gagal mengupload screenshot");
+      toast.error("Failed to upload screenshot.");
     }
   };
 
@@ -1907,16 +1907,16 @@ Detect the dominant language of the user input and respond using the same langua
     const file = e.dataTransfer.files?.[0];
     if (!file) return;
     if (!file.type.startsWith('image/')) {
-      toast.error("Hanya file gambar yang diijinkan!");
+      toast.error("Only image files are allowed!");
       return;
     }
     try {
       const processed = await processImage(file);
       setBugScreenshot(processed);
       setBugReportError(null);
-      toast.success("Screenshot berhasil di-drop!");
+      toast.success("Screenshot dropped successfully!");
     } catch (err) {
-      toast.error("Gagal mengupload screenshot");
+      toast.error("Failed to upload screenshot.");
     }
   };
 
@@ -2050,7 +2050,7 @@ Detect the dominant language of the user input and respond using the same langua
   };
   const deleteCase = (id: string) => {
     setResults(prev => prev.filter(tc => tc.id !== id));
-    toast.success("Test case berhasil dihapus!");
+    toast.success("Test case deleted successfully!");
   };
 
   const startEditing = (tc: TestCase) => {
@@ -2063,7 +2063,7 @@ Detect the dominant language of the user input and respond using the same langua
     setResults(prev => prev.map(tc => tc.id === editingId ? editBuffer : tc));
     setEditingId(null);
     setEditBuffer(null);
-    toast.success("Perubahan berhasil disimpan!");
+    toast.success("Changes saved successfully!");
   };
 
   const cancelEdit = () => {
@@ -2113,7 +2113,7 @@ Detect the dominant language of the user input and respond using the same langua
         setViewMode('results');
         setIsFromHistory(false);
         setConfirmation(prev => ({ ...prev, show: false }));
-        toast.info("Data berhasil direset!");
+        toast.info("Data reset successfully!");
       }
     });
   };
@@ -2122,8 +2122,8 @@ Detect the dominant language of the user input and respond using the same langua
     if (results.length > 0) {
       setConfirmation({
         show: true,
-        title: 'Generate Ulang?',
-        message: 'Generate ulang akan menghapus hasil saat ini. Lanjutkan?',
+        title: 'Regenerate?',
+        message: 'Regenerating will overwrite the current results. Do you want to continue?',
         onConfirm: () => {
           generateTestCases();
           setConfirmation(prev => ({ ...prev, show: false }));
@@ -2337,11 +2337,11 @@ Language Instruction: Detect the dominant language of the user input (the requir
         return updated;
       });
 
-      toast.success("Analisis kualitas requirement selesai!");
+      toast.success("Requirement quality analysis completed!");
     } catch (err: any) {
       console.error(err);
-      setReqAnalysisError(err.message || "Terjadi kesalahan saat menghubungi AI. Hubungan koneksi gagal.");
-      toast.error("Gagal melakukan analisis requirement.");
+      setReqAnalysisError(err.message || "An error occurred while contacting AI. Connection failed.");
+      toast.error("Failed to perform requirement analysis.");
     } finally {
       setAnalyzingReq(false);
     }
@@ -2377,7 +2377,7 @@ Language Instruction: Detect the dominant language of the user input (the requir
       localStorage.setItem(PREVIOUS_REQ_QUALITY_KEY, JSON.stringify(updated));
       return updated;
     });
-    toast.info("Berhasil dihapus dari history!");
+    toast.info("Successfully deleted from history!");
   };
 
   const resetReqChecker = () => {
@@ -2385,7 +2385,7 @@ Language Instruction: Detect the dominant language of the user input (the requir
     setReqFile(null);
     setReqAnalysisResult(null);
     setReqAnalysisError(null);
-    toast.info("Inputs dan hasil audit berhasil di-reset.");
+    toast.info("Inputs and auditing results reset successfully.");
   };
 
   const deleteBugReportHistoryItem = (id: string) => {
@@ -2394,7 +2394,7 @@ Language Instruction: Detect the dominant language of the user input (the requir
       localStorage.setItem(PREVIOUS_BUG_REPORT_KEY, JSON.stringify(updated));
       return updated;
     });
-    toast.info("Berhasil dihapus dari history!");
+    toast.info("Successfully deleted from history!");
   };
 
   const generateTestCasesBatch = useCallback(() => {
@@ -2451,7 +2451,7 @@ Language Instruction: Detect the dominant language of the user input (the requir
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const finalFilename = filename || `test_cases_${new Date().getTime()}`;
     saveAs(blob, `${finalFilename}.csv`);
-    toast.success("CSV berhasil di-export!");
+    toast.success("CSV exported successfully!");
   };
 
   const exportExcel = (filename?: string) => {
@@ -2483,7 +2483,7 @@ Language Instruction: Detect the dominant language of the user input (the requir
     const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
     const finalFilename = filename || `test_cases_${new Date().getTime()}`;
     saveAs(blob, `${finalFilename}.xlsx`);
-    toast.success("Excel berhasil di-export!");
+    toast.success("Excel exported successfully!");
   };
 
   const getTypeColor = (type: TestCaseType) => {
@@ -3525,7 +3525,7 @@ Language Instruction: Detect the dominant language of the user input (the requir
                             Paste Requirements / PRD Section
                           </label>
                           <textarea
-                            placeholder="Contoh: 'User harus bisa mendaftar dengan cepat dan aman menggunakan form register. Setelah mendaftar, user dikirimi email konfirmasi.'"
+                            placeholder="Example: 'User must be able to register quickly and securely using the registration form. After registering, the user is sent a confirmation email.'"
                             rows={reqAnalysisResult ? 5 : 12}
                             value={reqText}
                             onChange={(e) => { setReqText(e.target.value); setReqAnalysisError(null); }}
@@ -3563,8 +3563,8 @@ Language Instruction: Detect the dominant language of the user input (the requir
                               <div className="p-4 bg-slate-100 dark:bg-slate-800 group-hover:bg-violet-50 dark:group-hover:bg-violet-950 rounded-full text-slate-400 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-all">
                                 <Upload className="w-6 h-6 animate-pulse" />
                               </div>
-                              <p className="font-bold text-sm text-slate-700 dark:text-slate-300">Seret file PRD Anda ke sini</p>
-                              <p className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold uppercase tracking-wider">PDF, DOCX, TXT, Excel (XLSX) hingga 10MB</p>
+                              <p className="font-bold text-sm text-slate-700 dark:text-slate-300">Drag your PRD file here</p>
+                              <p className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold uppercase tracking-wider">PDF, DOCX, TXT, Excel (XLSX) up to 10MB</p>
                             </div>
                           )}
                         </div>
@@ -3587,7 +3587,7 @@ Language Instruction: Detect the dominant language of the user input (the requir
                       {analyzingReq ? (
                         <>
                           <Loader2 className="w-4 h-4 animate-spin" />
-                          Menganalisis Requirement...
+                          Analyzing Requirements...
                         </>
                       ) : (
                         <>
@@ -3603,13 +3603,13 @@ Language Instruction: Detect the dominant language of the user input (the requir
                 <div className="lg:col-span-7 flex flex-col">
                   {analyzingReq ? (
                     <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-12 shadow-sm text-center flex flex-col items-center justify-center gap-4 flex-1 min-h-[350px]">
-                      <div className="w-16 h-16 bg-violet-50 dark:bg-violet-950 rounded-full flex items-center justify-center relative text-violet-600 dark:text-violet-400">
+                      <div className="w-16 h-16 bg-violet-50 dark:bg-violet-955 rounded-full flex items-center justify-center relative text-violet-600 dark:text-violet-400">
                         <Loader2 className="w-8 h-8 text-violet-600 dark:text-violet-400 animate-spin" />
                       </div>
                       <div className="space-y-1">
-                        <h3 className="font-black text-slate-800 dark:text-slate-200 text-base tracking-tight animate-pulse">Sedang Menjalankan Audit Kualitas...</h3>
+                        <h3 className="font-black text-slate-800 dark:text-slate-200 text-base tracking-tight animate-pulse">Running Quality Audit...</h3>
                         <p className="text-slate-500 dark:text-slate-400 text-xs font-medium max-w-xs mx-auto leading-relaxed">
-                          AI sedang membedah spesifikasi fungsional untuk mendeteksi ambiguitas, lubang alur, dan mempersiapkan arahan pengujian.
+                          AI is dissecting functional specifications to detect ambiguity, identify gaps, and prepare testing guidelines.
                         </p>
                       </div>
                     </div>
@@ -3627,7 +3627,7 @@ Language Instruction: Detect the dominant language of the user input (the requir
                         </div>
                         <span className={cn(
                           "mt-3 px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-full border shadow-xs",
-                          reqAnalysisResult.qualityLabel === 'Good' ? "bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/50" :
+                          reqAnalysisResult.qualityLabel === 'Good' ? "bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-955/20 dark:text-emerald-400 dark:border-emerald-900/50" :
                           reqAnalysisResult.qualityLabel === 'Needs Improvement' ? "bg-amber-50 text-amber-600 border-amber-100 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/50" :
                           "bg-rose-50 text-rose-600 border-rose-100 dark:bg-rose-955/20 dark:text-rose-400 dark:border-rose-900/50"
                         )}>
@@ -3647,9 +3647,9 @@ Language Instruction: Detect the dominant language of the user input (the requir
                         <ClipboardCheck className="w-8 h-8" />
                       </div>
                       <div className="space-y-1">
-                        <h3 className="font-extrabold text-slate-700 dark:text-slate-300 text-sm tracking-tight">Menunggu Input Analisis</h3>
+                        <h3 className="font-extrabold text-slate-700 dark:text-slate-300 text-sm tracking-tight">Waiting for Analysis Input</h3>
                         <p className="text-slate-400 dark:text-slate-500 text-xs font-medium max-w-xs mx-auto leading-relaxed">
-                          Masukkan requirement manual di panel kiri atau unggah file PRD yang ingin diperiksa kelengkapan kualitasnya.
+                          Enter requirements manually in the left panel or upload a PRD file to inspect its quality completeness.
                         </p>
                       </div>
                     </div>
@@ -3674,7 +3674,7 @@ Language Instruction: Detect the dominant language of the user input (the requir
                       )}
                     >
                       <AlertTriangle className={cn("w-3.5 h-3.5", reqResultTab === 'issues' ? "text-white" : "text-slate-400")} />
-                      Kelemahan ({(reqAnalysisResult.issuesFound || []).length})
+                      Weaknesses ({(reqAnalysisResult.issuesFound || []).length})
                     </button>
                     <button
                       type="button"
@@ -3687,7 +3687,7 @@ Language Instruction: Detect the dominant language of the user input (the requir
                       )}
                     >
                       <FileText className={cn("w-3.5 h-3.5", reqResultTab === 'draft' ? "text-white" : "text-slate-400")} />
-                      Draft Baru
+                      New Draft
                     </button>
                     <button
                       type="button"
@@ -3700,7 +3700,7 @@ Language Instruction: Detect the dominant language of the user input (the requir
                       )}
                     >
                       <Lightbulb className={cn("w-3.5 h-3.5", reqResultTab === 'notes' ? "text-white" : "text-slate-400")} />
-                      Strategi QA
+                      QA Strategy
                     </button>
                   </div>
 
@@ -3717,16 +3717,16 @@ Language Instruction: Detect the dominant language of the user input (the requir
                       >
                         <div className="flex justify-between items-center border-b border-violet-50 dark:border-slate-800 pb-3">
                           <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 tracking-tight flex items-center gap-1.5">
-                            Kelemahan Kualitas Requirement ({(reqAnalysisResult.issuesFound || []).length})
+                            Requirement Quality Weaknesses ({(reqAnalysisResult.issuesFound || []).length})
                           </h3>
                         </div>
 
                         {(!reqAnalysisResult.issuesFound || reqAnalysisResult.issuesFound.length === 0) ? (
-                          <div className="p-8 text-center bg-slate-50 dark:bg-slate-800/20 border border-slate-150 dark:border-slate-800 rounded-2xl space-y-1 opacity-85">
-                            <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
-                            <h4 className="font-extrabold text-sm text-slate-700 dark:text-slate-300">Luar Biasa! Requirement Kokoh</h4>
-                            <p className="text-xs text-slate-400 font-medium max-w-sm mx-auto">Tidak ditemukan adanya kelemahan kualitas spesifikasi atau kalimat yang ambigu.</p>
-                          </div>
+                           <div className="p-8 text-center bg-slate-50 dark:bg-slate-800/20 border border-slate-150 dark:border-slate-800 rounded-2xl space-y-1 opacity-85">
+                             <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
+                             <h4 className="font-extrabold text-sm text-slate-700 dark:text-slate-300">Outstanding! Solid Requirements</h4>
+                             <p className="text-xs text-slate-400 font-medium max-w-sm mx-auto">No specification quality weaknesses or ambiguous sentences were found.</p>
+                           </div>
                         ) : (
                           <div className="space-y-4">
                             {(reqAnalysisResult.issuesFound || []).map((issue, idx) => (
@@ -3749,7 +3749,7 @@ Language Instruction: Detect the dominant language of the user input (the requir
 
                                 <div className="space-y-1.5">
                                   <div className="text-xs font-bold text-slate-800 dark:text-slate-300">
-                                    Kontradiksi / Kalimat Bermasalah:
+                                    Contradiction / Issue Statement:
                                   </div>
                                   <div className="text-xs font-mono bg-rose-50/40 text-rose-700 dark:bg-rose-955/10 dark:text-rose-400 border border-rose-100/30 dark:border-rose-950 p-2.5 rounded-lg line-through whitespace-pre-wrap leading-relaxed">
                                     "{issue.requirementText}"
@@ -3757,17 +3757,17 @@ Language Instruction: Detect the dominant language of the user input (the requir
                                 </div>
 
                                 <div className="space-y-1 text-xs">
-                                  <div className="font-bold text-slate-800 dark:text-slate-300">Analisis Kelemahan:</div>
+                                  <div className="font-bold text-slate-800 dark:text-slate-300">Weakness Analysis:</div>
                                   <p className="text-slate-500 dark:text-slate-400 font-medium leading-relaxed">{issue.explanation}</p>
                                 </div>
 
                                 <div className="space-y-1.5">
                                   <div className="text-xs font-bold text-slate-800 dark:text-slate-300 flex items-center justify-between">
-                                    <span>Saran Deskripsi Baru yang Testable:</span>
+                                    <span>Suggested Testable Rewrite:</span>
                                     <button 
                                       onClick={() => {
                                         navigator.clipboard.writeText(issue.suggestedRewrite);
-                                        toast.success("Saran perbaikan berhasil disalin!");
+                                        toast.success("Suggested improvement copied successfully!");
                                       }}
                                       className="text-[10px] font-black uppercase text-violet-500 hover:text-violet-650 tracking-wider flex items-center gap-1 cursor-pointer"
                                     >
@@ -3802,7 +3802,7 @@ Language Instruction: Detect the dominant language of the user input (the requir
                             type="button"
                             onClick={() => {
                               navigator.clipboard.writeText(reqAnalysisResult.improvedRequirementDraft);
-                              toast.success("Draf requirement yang telah distandardisasi berhasil disalin!");
+                              toast.success("Standardized requirement draft successfully copied!");
                             }}
                             className="px-3 py-1.5 bg-violet-50 border border-violet-150 dark:bg-violet-955/40 dark:border-violet-900 rounded-xl text-[10px] font-black uppercase tracking-wider text-violet-600 hover:bg-violet-100 transition-all flex items-center gap-1.5 cursor-pointer"
                           >
@@ -3811,7 +3811,7 @@ Language Instruction: Detect the dominant language of the user input (the requir
                           </button>
                         </div>
                         <div className="text-xs font-medium bg-slate-50 dark:bg-slate-800/30 text-slate-700 dark:text-slate-300 border border-slate-150 dark:border-slate-800 p-4 rounded-2xl leading-relaxed whitespace-pre-wrap font-sans">
-                          {reqAnalysisResult.improvedRequirementDraft}
+                           {reqAnalysisResult.improvedRequirementDraft}
                         </div>
                       </motion.div>
                     )}
@@ -3954,7 +3954,7 @@ Language Instruction: Detect the dominant language of the user input (the requir
                   {/* Bug Description */}
                   <div className="space-y-2">
                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                      {bugReportMode === 'manual' ? 'Deskripsi Bug / Temuan Mentah *' : 'Deskripsi Singkat Bug *'}
+                      {bugReportMode === 'manual' ? 'Bug Description / Raw Findings *' : 'Short Bug Description *'}
                     </label>
                     <textarea
                       value={bugDescription}
@@ -3965,8 +3965,8 @@ Language Instruction: Detect the dominant language of the user input (the requir
                       rows={bugReportMode === 'manual' ? 4 : 3}
                       placeholder={
                         bugReportMode === 'manual'
-                          ? "Tulis detail temuan bug Anda di sini. Contoh: Saat mengisi password < 6 karakter, halaman tidak merespon dan spinner melingkar selamanya."
-                          : "Contoh: Tombol bayar bertumpuk dengan footer saat resolusi layar mobile."
+                          ? "Write details of your bug findings. Example: When entering password < 6 chars, page freezes and circular spinner spins indefinitely."
+                          : "Example: Payment button overlaps with footer on mobile device resolution."
                       }
                       className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs md:text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 transition-all leading-relaxed"
                     />
@@ -3977,12 +3977,12 @@ Language Instruction: Detect the dominant language of the user input (the requir
                     <>
                       {/* Steps to reproduce */}
                       <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Langkah Reproduksi (Opsional)</label>
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Steps to Reproduce (Optional)</label>
                         <textarea
                           value={stepsToReproduce}
                           onChange={(e) => setStepsToReproduce(e.target.value)}
                           rows={3}
-                          placeholder="1. Masuk ke halaman login&#10;2. Ketik email yang valid&#10;3. Masukkan password '123'&#10;4. Klik Submit"
+                          placeholder="1. Go to login page&#10;2. Enter a valid email&#10;3. Enter password '123'&#10;4. Click Submit"
                           className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs md:text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 transition-all leading-relaxed"
                         />
                       </div>
@@ -3990,22 +3990,22 @@ Language Instruction: Detect the dominant language of the user input (the requir
                       {/* Expected & Actual Grid */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Hasil yang Diharapkan</label>
+                          <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Expected Result</label>
                           <textarea
                             value={expectedResult}
                             onChange={(e) => setExpectedResult(e.target.value)}
                             rows={3}
-                            placeholder="Muncul pesan validasi 'Password minimal 6 karakter'"
+                            placeholder="Validation message 'Password must be at least 6 characters' appears"
                             className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs md:text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 transition-all leading-relaxed"
                           />
                         </div>
                         <div className="space-y-2">
-                          <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Hasil Aktual</label>
+                          <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Actual Result</label>
                           <textarea
                             value={actualResult}
                             onChange={(e) => setActualResult(e.target.value)}
                             rows={3}
-                            placeholder="Sistem freeze (hang) dan tombol loading berputar tanpa henti"
+                            placeholder="System freezes (hangs) and loading button rotates endlessly"
                             className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs md:text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 transition-all leading-relaxed"
                           />
                         </div>
@@ -4018,7 +4018,7 @@ Language Instruction: Detect the dominant language of the user input (the requir
                           type="text"
                           value={bugEnvironment}
                           onChange={(e) => setBugEnvironment(e.target.value)}
-                          placeholder="Contoh: Chrome 125, macOS Sonoma, iPhone 15 Pro"
+                          placeholder="Example: Chrome 125, macOS Sonoma, iPhone 15 Pro"
                           className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs md:text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 transition-all"
                         />
                       </div>
@@ -4304,9 +4304,9 @@ Language Instruction: Detect the dominant language of the user input (the requir
                         <Bug className="w-8 h-8 text-orange-500 dark:text-orange-400" />
                       </div>
                       <div className="space-y-1.5">
-                        <h3 className="text-sm font-bold text-slate-700 tracking-tight">Menunggu Input Laporan</h3>
+                        <h3 className="text-sm font-bold text-slate-700 tracking-tight">Waiting for Report Input</h3>
                         <p className="text-xs text-slate-400 max-w-sm leading-relaxed">
-                          Silakan isi detail temuan bug di panel kiri atau unggah screenshot, kemudian pilih "Generate" untuk menghasilkan spesifikasi laporan bug komprehensif bagi tim pengembang.
+                          Please fill in the bug details on the left panel or upload a screenshot, then click "Generate" to construct a comprehensive bug report specification for the development team.
                         </p>
                       </div>
                     </div>
@@ -4330,7 +4330,7 @@ Language Instruction: Detect the dominant language of the user input (the requir
                     inputMode === 'manual' ? "bg-white text-pink-600 shadow-sm font-black" : "text-slate-400 hover:text-slate-600"
                   )}
                 >
-                  Tulis Manual
+                  Manual Text
                 </button>
                 <button 
                   onClick={() => handleInputModeChange('upload')}
@@ -4348,7 +4348,7 @@ Language Instruction: Detect the dominant language of the user input (the requir
                   <FileText className="w-4 h-4" /> PRD Source
                 </h2>
                 <p className="text-[11px] text-pink-600/70 font-medium tracking-wide">
-                  {inputMode === 'manual' ? "Tulis atau paste requirement fitur" : "Lampirkan dokumen PRD"}
+                  {inputMode === 'manual' ? "Write or paste feature requirements" : "Attach PRD document"}
                 </p>
               </div>
 
@@ -4358,7 +4358,7 @@ Language Instruction: Detect the dominant language of the user input (the requir
                     value={prdText}
                     onChange={(e) => handlePrdTextChange(e.target.value)}
                     disabled={results.length > 0}
-                    placeholder="Contoh: Fitur Login dengan Google, validasi email, dan limit login..."
+                    placeholder="Example: Login with Google feature, email validation, and login limits..."
                     className={cn(
                       "w-full h-[320px] p-5 text-sm bg-white/60 border border-pink-100 rounded-3xl focus:ring-4 focus:ring-pink-500/10 focus:border-pink-500 shadow-inner transition-all outline-none resize-none font-sans placeholder:text-slate-400 leading-relaxed",
                       results.length > 0 && "opacity-60 cursor-not-allowed"
@@ -4370,7 +4370,7 @@ Language Instruction: Detect the dominant language of the user input (the requir
                        "text-[10px] font-bold",
                        prdText.trim().split(/\s+/).filter(w => w.length > 0).length >= 15 ? "text-emerald-600" : "text-slate-500"
                     )}>
-                      {prdText.trim().split(/\s+/).filter(w => w.length > 0).length} / 15 kata
+                      {prdText.trim().split(/\s+/).filter(w => w.length > 0).length} / 15 words
                     </span>
                   </div>
                 </div>
@@ -4386,7 +4386,7 @@ Language Instruction: Detect the dominant language of the user input (the requir
                     <input {...generatorDropzone.getInputProps()} disabled={results.length > 0} />
                     <Upload className="w-10 h-10 text-pink-400 mb-3" />
                     <p className="text-[10px] text-pink-600 font-bold uppercase tracking-[0.15em] px-6 text-center leading-relaxed">
-                      {generatorDropzone.isDragActive ? "Lepas file di sini" : "Klik atau seret PDF, DOCX, TXT"}
+                      {generatorDropzone.isDragActive ? "Drop file here" : "Click or drag PDF, DOCX, TXT"}
                     </p>
                   </div>
 
@@ -4410,7 +4410,7 @@ Language Instruction: Detect the dominant language of the user input (the requir
                     </div>
                   ) : (
                     <div className="h-[90px] flex items-center justify-center border border-slate-100 rounded-3xl border-dashed opacity-40">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Belum ada file</p>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">No file uploaded</p>
                     </div>
                   )}
                 </div>
@@ -4435,7 +4435,7 @@ Language Instruction: Detect the dominant language of the user input (the requir
                   <input {...imageDropzone.getInputProps()} disabled={results.length > 0} />
                   <PlusCircle className="w-6 h-6 text-slate-400 mb-2" />
                   <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider px-6 text-center leading-relaxed">
-                    Unggah Screenshot atau UI Design
+                    Upload Screenshot or UI Design
                   </p>
                 </div>
 
@@ -4469,14 +4469,14 @@ Language Instruction: Detect the dominant language of the user input (the requir
                   <PieChart className="w-4 h-4 text-emerald-600" /> Coverage Analyzer
                 </h2>
                 <p className="text-[11px] text-emerald-600/70 font-medium tracking-wide">
-                  Bandingkan PRD dengan existing Test Case
+                  Compare PRD with existing Test Cases
                 </p>
               </div>
 
               <div className="space-y-5">
                 {/* PRD Upload for Checker */}
                 <div className="space-y-3">
-                  <p className="text-[10px] font-bold text-emerald-950 uppercase tracking-widest ml-1 opacity-60">1. Dokumen PRD</p>
+                  <p className="text-[10px] font-bold text-emerald-950 uppercase tracking-widest ml-1 opacity-60">1. PRD Document</p>
                   <div 
                     {...checkerPrdDropzone.getRootProps()} 
                     className={cn(
@@ -4516,22 +4516,22 @@ Language Instruction: Detect the dominant language of the user input (the requir
                       onClick={() => {
                         setConfirmation({
                           show: true,
-                          title: 'Reset Analisis Coverage?',
-                          message: 'Apakah Anda yakin ingin mereset hasil analisis coverage dan file yang diunggah saat ini?',
+                          title: 'Reset Coverage Analysis?',
+                          message: 'Are you sure you want to reset the current coverage analysis results and uploaded files?',
                           onConfirm: () => {
                             setCheckerCoverage(null);
                             setCheckerPrdFile(null);
                             setCheckerTestCaseFile(null);
                             setInputError(null);
                             setConfirmation(prev => ({ ...prev, show: false }));
-                            toast.info("Analisis coverage berhasil direset!");
+                            toast.info("Coverage analysis successfully reset!");
                           }
                         });
                       }}
                       className="w-full bg-rose-600 text-white font-bold py-4 rounded-2xl transition-all shadow-xl shadow-rose-600/20 flex items-center justify-center gap-2 hover:bg-rose-700 hover:-translate-y-0.5 active:translate-y font-sans tracking-wide"
                     >
                       <RefreshCw className="w-5 h-5 animate-spin-once" />
-                      Reset Analisis
+                      Reset Analysis
                     </button>
                   ) : (
                     <button
@@ -4596,7 +4596,7 @@ Language Instruction: Detect the dominant language of the user input (the requir
                   <div className="px-4 py-2 bg-amber-50 border border-amber-100 rounded-xl flex items-start gap-2 animate-in fade-in slide-in-from-top-1">
                     <Info className="w-3 h-3 text-amber-600 mt-0.5 shrink-0" />
                     <p className="text-[9px] text-amber-700 leading-tight">
-                      Template & Layout dikunci untuk menjaga konsistensi data. Reset session untuk mengubah.
+                      Template & Layout are locked to maintain data consistency. Reset session to change styles.
                     </p>
                   </div>
                 )}
@@ -4606,7 +4606,7 @@ Language Instruction: Detect the dominant language of the user input (the requir
                   disabled={loading || (inputMode === 'manual' ? !prdText.trim() : !generatorFile)}
                   className={cn(
                     "w-full text-white font-bold py-4 rounded-2xl transition-all shadow-xl flex items-center justify-center gap-2 group text-[11px] uppercase tracking-wider font-sans",
-                    results.length > 0 
+                    results.length > 0
                       ? "bg-slate-700 hover:bg-slate-800 shadow-slate-500/20" 
                       : "bg-pink-600 hover:bg-pink-700 shadow-pink-600/20",
                     (loading || (inputMode === 'manual' ? !prdText.trim() : !generatorFile)) && "opacity-50 cursor-not-allowed shadow-none"
@@ -4619,7 +4619,7 @@ Language Instruction: Detect the dominant language of the user input (the requir
                     </>
                   ) : (
                     <>
-                      <span>{results.length > 0 ? 'Generate Ulang' : 'Generate Test Cases'}</span>
+                      <span>{results.length > 0 ? 'Regenerate' : 'Generate Test Cases'}</span>
                       <Send className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                     </>
                   )}
@@ -4638,7 +4638,7 @@ Language Instruction: Detect the dominant language of the user input (the requir
             )}
 
             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-[10px] text-slate-500 leading-relaxed">
-              <strong>Pro Tip:</strong> {activeFeature === 'generator' ? (inputMode === 'manual' ? "Gunakan kalimat perintah yang jelas." : "PDF berstruktur paling optimal.") : "Pastikan file Test Case memiliki kolom Title atau Skenario."}
+              <strong>Pro Tip:</strong> {activeFeature === 'generator' ? (inputMode === 'manual' ? "Use clear commands and descriptions." : "Structured PDFs yield the best results.") : "Ensure your Test Case file has a Title or Scenario column."}
             </div>
 
             {results.length > 0 && activeFeature === 'generator' && (
@@ -4647,7 +4647,7 @@ Language Instruction: Detect the dominant language of the user input (the requir
                 className="w-full bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold py-3.5 rounded-2xl transition-all text-xs flex items-center justify-center gap-2"
               >
                 <X className="w-3.5 h-3.5" />
-                Reset Semua Data
+                Reset All Data
               </button>
             )}
           </div>
@@ -4677,8 +4677,8 @@ Language Instruction: Detect the dominant language of the user input (the requir
                   </div>
                   <p className="text-slate-500 text-xs font-medium">
                     {activeFeature === 'generator' 
-                      ? (viewMode === 'coverage' ? "Analisis coverage hasil generate vs berkas PRD" : "Skenario uji otomatis berkualitas tinggi dari spesifikasi requirement") 
-                      : "Visualisasi pemenuhan requirement pada berkas test case Anda"}
+                      ? (viewMode === 'coverage' ? "Coverage analysis of generated results vs PRD documents" : "High-quality automated test scenarios from specification requirements") 
+                      : "Visualization of requirement coverage based on your uploaded test cases"}
                   </p>
                 </div>
 
@@ -4720,7 +4720,7 @@ Language Instruction: Detect the dominant language of the user input (the requir
                     <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input 
                       type="text"
-                      placeholder="Cari skenario atau hasil yang diharapkan..."
+                      placeholder="Search scenarios or expected results..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="w-full pl-11 pr-4 py-3 text-sm bg-white border border-pink-50 rounded-2xl outline-none focus:ring-4 focus:ring-pink-500/5 focus:border-pink-400 shadow-sm transition-all placeholder:text-slate-400 font-medium"
@@ -4743,7 +4743,7 @@ Language Instruction: Detect the dominant language of the user input (the requir
                       <div className="flex items-center justify-between mb-8">
                         <div>
                           <h2 className="text-2xl font-black text-emerald-950 uppercase tracking-tight">Requirement Analysis</h2>
-                          <p className="text-slate-500 text-sm">Hasil perbandingan literatur PRD dengan Test Case yang diberikan.</p>
+                          <p className="text-slate-500 text-sm">Comparison results between the PRD specification and provided Test Cases.</p>
                         </div>
                         <div className="text-right">
                           <div className="text-6xl font-black text-emerald-600 tracking-tighter leading-none">{checkerCoverage.percent}%</div>
@@ -4778,7 +4778,7 @@ Language Instruction: Detect the dominant language of the user input (the requir
 
                     <div className="p-8 grid grid-cols-1 md:grid-cols-3 gap-8">
                       <div className="space-y-4">
-                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest px-2">Covered (Terpenuhi)</h3>
+                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest px-2">Covered (Fulfilled)</h3>
                         <div className="space-y-2 max-h-[360px] overflow-y-auto pr-2">
                           {checkerCoverage.fullyCovered.map((item, i) => (
                             <CoverageItemCard key={i} item={item} status="full" />
@@ -4786,7 +4786,7 @@ Language Instruction: Detect the dominant language of the user input (the requir
                         </div>
                       </div>
                       <div className="space-y-4">
-                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest px-2">Partial (Sebagian)</h3>
+                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest px-2">Partial (Partial)</h3>
                         <div className="space-y-2 max-h-[360px] overflow-y-auto pr-2">
                           {checkerCoverage.partiallyCovered.map((item, i) => (
                             <CoverageItemCard key={i} item={item} status="partial" />
@@ -4794,7 +4794,7 @@ Language Instruction: Detect the dominant language of the user input (the requir
                         </div>
                       </div>
                       <div className="space-y-4">
-                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest px-2">Missing (Belum Ada)</h3>
+                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest px-2">Missing (None)</h3>
                         <div className="space-y-2 max-h-[360px] overflow-y-auto pr-2">
                           {checkerCoverage.missingRequirements.map((item, i) => (
                             <CoverageItemCard key={i} item={item} status="missing" />
@@ -4810,7 +4810,7 @@ Language Instruction: Detect the dominant language of the user input (the requir
                             <Zap className="w-4 h-4 fill-indigo-200" strokeWidth={2.5} />
                           </div>
                           <div className="space-y-1.5 flex-1 min-w-0">
-                            <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-950">Rekomendasi Strategis AI</h4>
+                            <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-950">AI Strategic Recommendations</h4>
                             <div className="max-h-48 overflow-y-auto pr-1">
                               {renderRecommendationText(checkerCoverage.recommendations)}
                             </div>
@@ -4829,9 +4829,9 @@ Language Instruction: Detect the dominant language of the user input (the requir
                       </div>
                     </div>
                     <div className="space-y-3">
-                      <h3 className="text-2xl font-black text-emerald-900 tracking-tight">Mulai Analisis Coverage</h3>
+                      <h3 className="text-2xl font-black text-emerald-900 tracking-tight">Start Coverage Analysis</h3>
                       <p className="text-sm text-slate-500 max-w-sm mx-auto leading-relaxed font-medium">
-                        Unggah dokumen PRD dan file Test Case existing Anda. Kami akan menganalisis sejauh mana requirement terpenuhi.
+                        Upload your PRD document and existing Test Case file. We will analyze the coverage ratio and gaps.
                       </p>
                     </div>
                     <div className="flex items-center gap-4 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">
@@ -5076,16 +5076,16 @@ Language Instruction: Detect the dominant language of the user input (the requir
                                           <Search className="w-6 h-6 text-pink-400" />
                                         </div>
                                         <div className="space-y-1">
-                                          <h4 className="font-extrabold text-slate-700 text-sm">Tidak Ada Skenario Uji</h4>
+                                          <h4 className="font-extrabold text-slate-700 text-sm">No Test Scenarios</h4>
                                           <p className="text-xs text-slate-500 max-w-sm leading-relaxed mx-auto flex-wrap">
-                                            Tidak menemukan test case untuk kategori <span className="font-bold text-pink-600">"{activeFilter}"</span>{searchQuery ? ` atau pencarian "${searchQuery}"` : ""}. Silakan ubah filter atau bersihkan kata kunci pencarian.
+                                            No test cases found for category <span className="font-bold text-pink-600">"{activeFilter}"</span>{searchQuery ? ` or search query "${searchQuery}"` : ""}. Please change your filter or clear your search query.
                                           </p>
                                         </div>
                                         <button 
                                           onClick={() => { setActiveFilter('All'); setSearchQuery(''); }}
                                           className="px-4 py-1.5 bg-pink-100 border border-pink-200 text-pink-700 text-xs font-black rounded-lg transition-all active:scale-95 shadow-xs"
                                         >
-                                          Reset Filter & Pencarian
+                                          Reset Filters & Search
                                         </button>
                                       </div>
                                     )}
@@ -5131,7 +5131,7 @@ Language Instruction: Detect the dominant language of the user input (the requir
                           className="px-8 py-3 bg-white border-2 border-emerald-600 text-emerald-600 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-emerald-600 hover:text-white transition-all shadow-lg active:scale-95 flex items-center gap-2 disabled:opacity-50"
                          >
                            {isCheckingCoverage ? <Loader2 className="w-4 h-4 animate-spin" /> : <PieChart className="w-4 h-4" />}
-                           Cek Coverage Hasil Generate
+                           Check Generated Coverage
                          </button>
                       </div>
                     )}
@@ -5148,7 +5148,7 @@ Language Instruction: Detect the dominant language of the user input (the requir
                           <div className="flex items-center justify-between mb-8">
                             <div>
                               <h2 className="text-2xl font-black text-emerald-950 uppercase tracking-tight">Coverage findings</h2>
-                              <p className="text-slate-500 text-sm">Sejauh mana requirement PRD ter-cover oleh hasil generate di atas.</p>
+                              <p className="text-slate-500 text-sm">How well the PRD specifications are covered by the generated test cases above.</p>
                             </div>
                             <div className="text-right">
                               <div className="text-6xl font-black text-emerald-600 tracking-tighter leading-none">{generatorCoverage.percent}%</div>
@@ -5183,7 +5183,7 @@ Language Instruction: Detect the dominant language of the user input (the requir
 
                         <div className="p-8 grid grid-cols-1 md:grid-cols-3 gap-10">
                           <div className="space-y-4">
-                            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest px-2">Covered (Terpenuhi)</h3>
+                            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest px-2">Covered (Fulfilled)</h3>
                             <div className="space-y-2 max-h-[360px] overflow-y-auto pr-2">
                               {generatorCoverage.fullyCovered.map((item, i) => (
                                 <CoverageItemCard key={i} item={item} status="full" />
@@ -5191,7 +5191,7 @@ Language Instruction: Detect the dominant language of the user input (the requir
                             </div>
                           </div>
                           <div className="space-y-4">
-                            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest px-2">Partial (Sebagian)</h3>
+                            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest px-2">Partial (Partial)</h3>
                             <div className="space-y-2 max-h-[360px] overflow-y-auto pr-2">
                               {generatorCoverage.partiallyCovered.map((item, i) => (
                                 <CoverageItemCard key={i} item={item} status="partial" />
@@ -5199,7 +5199,7 @@ Language Instruction: Detect the dominant language of the user input (the requir
                             </div>
                           </div>
                           <div className="space-y-4">
-                            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest px-2">Missing (Belum Ada)</h3>
+                            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest px-2">Missing (None)</h3>
                             <div className="space-y-2 max-h-[360px] overflow-y-auto pr-2">
                               {generatorCoverage.missingRequirements.map((item, i) => (
                                 <CoverageItemCard key={i} item={item} status="missing" />
@@ -5216,7 +5216,7 @@ Language Instruction: Detect the dominant language of the user input (the requir
                               className="bg-pink-950 text-white px-6 py-3 rounded-xl font-black uppercase tracking-widest text-[11px] hover:bg-black transition-all shadow-md flex items-center gap-2 active:scale-95 disabled:opacity-50"
                             >
                               {isGeneratingMissingCases ? <Loader2 className="w-4 h-4 animate-spin" /> : <CopyPlus className="w-4 h-4" />}
-                              Generate Test Case untuk yang Belum Tercover
+                              Generate Test Cases for Uncovered Gaps
                             </button>
                           </div>
                         )}
@@ -5234,7 +5234,7 @@ Language Instruction: Detect the dominant language of the user input (the requir
                                 <h3 className="text-xl font-black text-amber-900 tracking-tight">Suggested Missing Test Cases</h3>
                               </div>
                               <p className="text-xs text-amber-700/80 font-semibold max-w-xl leading-relaxed">
-                                Skenario uji tambahan berbasis gap requirement. Review detail sebelum menggabungkannya ke hasil utama.
+                                Additional test scenarios based on requirement gaps. Review findings before merging with primary results list.
                               </p>
                             </div>
                             <div className="flex items-center gap-2">
@@ -5463,7 +5463,7 @@ Language Instruction: Detect the dominant language of the user input (the requir
                         </div>
                         <h4 className="font-bold text-sm text-slate-800 truncate mb-1 pr-8">{item.title}</h4>
                         <p className="text-[11px] text-slate-500 truncate">
-                          Rating: {item.results?.qualityLabel || 'N/A'} • {(item.results?.issuesFound || []).length} Isu
+                          Rating: {item.results?.qualityLabel || 'N/A'} • {(item.results?.issuesFound || []).length} Issues
                         </p>
                       </div>
                     ))
@@ -5503,7 +5503,7 @@ Language Instruction: Detect the dominant language of the user input (the requir
                         </div>
                         <h4 className="font-bold text-sm text-slate-800 truncate mb-1 pr-8">{item.title}</h4>
                         <p className="text-[11px] text-slate-500 truncate">
-                          {item.bugDescription || "Analisis UI Screenshot"}
+                          {item.bugDescription || "UI Screenshot Analysis"}
                         </p>
                       </div>
                     ))
@@ -5620,13 +5620,13 @@ Language Instruction: Detect the dominant language of the user input (the requir
                       onClick={() => setConfirmation(prev => ({ ...prev, show: false }))}
                       className="flex-1 py-3 text-sm font-bold text-slate-500 hover:bg-slate-200 rounded-xl transition-colors"
                     >
-                      Batal
+                      Cancel
                     </button>
                     <button 
                       onClick={confirmation.onConfirm}
                       className={cn("flex-1 py-3 text-sm font-bold text-white rounded-xl transition-colors shadow-xl", toolTheme.bg, toolTheme.hover, toolTheme.glowSm)}
                     >
-                      Lanjutkan
+                      Continue
                     </button>
                   </div>
                 </motion.div>
@@ -5656,16 +5656,16 @@ Language Instruction: Detect the dominant language of the user input (the requir
                   {exportModal.format === 'csv' ? <Download className="w-8 h-8 text-pink-600" /> : <FileBox className="w-8 h-8 text-emerald-600" />}
                 </div>
                 <h3 className="text-xl font-bold text-slate-800 mb-2">Export Data (.{exportModal.format})</h3>
-                <p className="text-sm text-slate-500 mb-6">Masukkan nama file jika ingin custom, atau kosongkan untuk nama otomatis.</p>
+                <p className="text-sm text-slate-500 mb-6">Enter a custom filename, or leave it blank to auto-generate one.</p>
                 
                 <div className="space-y-4">
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Nama File (Optional)</label>
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Filename (Optional)</label>
                     <input 
                       type="text" 
                       value={exportModal.filename}
                       onChange={(e) => setExportModal(prev => ({ ...prev, filename: e.target.value }))}
-                      placeholder="Contoh: checkout_flows_v1"
+                      placeholder="Example: checkout_flows_v1"
                       className={cn(
                         "w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-4 outline-none transition-all placeholder:text-slate-300 font-medium",
                         exportModal.format === 'csv' ? "focus:ring-pink-500/10 focus:border-pink-400" : "focus:ring-emerald-500/10 focus:border-emerald-400"
@@ -5675,7 +5675,7 @@ Language Instruction: Detect the dominant language of the user input (the requir
                   <div className="p-4 bg-slate-50 rounded-2xl flex items-center gap-3">
                     <Info className="w-4 h-4 text-slate-400 shrink-0" />
                     <p className="text-[10px] text-slate-500 leading-tight">
-                      File akan disimpan sebagai <span className="font-bold text-slate-700">{exportModal.filename || 'test_cases_TIMESTAMP'}.{exportModal.format}</span>
+                      File will be saved as <span className="font-bold text-slate-700">{exportModal.filename || 'test_cases_TIMESTAMP'}.{exportModal.format}</span>
                     </p>
                   </div>
                 </div>
@@ -5686,7 +5686,7 @@ Language Instruction: Detect the dominant language of the user input (the requir
                   onClick={() => setExportModal(prev => ({ ...prev, show: false }))}
                   className="flex-1 py-3.5 text-sm font-bold text-slate-500 hover:bg-slate-200 rounded-xl transition-all"
                 >
-                  Batal
+                  Cancel
                 </button>
                 <button 
                   onClick={handleExportConfirm}
