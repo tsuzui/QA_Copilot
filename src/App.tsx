@@ -999,17 +999,17 @@ export default function App() {
     return (
       <div className="max-w-4xl mx-auto px-6 py-4 text-left w-full">
         {loading ? (
-          <div className="py-24 text-center text-slate-400 flex flex-col items-center gap-4 bg-white/60 backdrop-blur-md border border-pink-100 rounded-3xl shadow-xl w-full">
+          <div className="py-24 text-center text-slate-400 flex flex-col items-center gap-4 bg-white/60 dark:bg-slate-900/40 backdrop-blur-md border border-pink-100 dark:border-pink-900/35 rounded-3xl shadow-xl w-full animate-pulse">
             <div className="relative">
-              <div className="w-12 h-12 bg-pink-100 rounded-full animate-ping absolute inset-0" />
-              <Loader2 className="w-12 h-12 text-pink-600 animate-spin relative" />
+              <div className="w-12 h-12 bg-pink-100/50 dark:bg-pink-950/40 rounded-full animate-ping absolute inset-0" />
+              <Loader2 className="w-12 h-12 text-pink-600 dark:text-pink-400 animate-spin relative" />
             </div>
-            <p className="text-sm text-pink-900 font-bold uppercase tracking-widest animate-pulse">Generating...</p>
+            <p className="text-sm text-pink-900 dark:text-pink-100 font-bold uppercase tracking-widest">Generating...</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center bg-white/70 backdrop-blur-md border border-slate-100 rounded-3xl p-6 sm:p-8 shadow-md">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center bg-white/70 dark:bg-slate-900/60 backdrop-blur-md border border-slate-100 dark:border-slate-800/80 rounded-3xl p-6 sm:p-8 shadow-md transition-all duration-300">
             {/* Left visual representation: Simulating Coverage Gauge */}
-            <div className="md:col-span-12 lg:col-span-5 flex flex-col items-center justify-center border-b lg:border-b-0 lg:border-r border-slate-100 pb-6 lg:pb-0 lg:pr-8">
+            <div className="md:col-span-12 lg:col-span-5 flex flex-col items-center justify-center border-b lg:border-b-0 lg:border-r border-slate-100 dark:border-slate-800/80 pb-6 lg:pb-0 lg:pr-8">
               <div className="relative w-36 h-36 flex items-center justify-center">
                 {/* Circular Progress track */}
                 <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
@@ -1017,9 +1017,10 @@ export default function App() {
                     cx="50"
                     cy="50"
                     r="40"
-                    stroke="#f1f5f9"
+                    stroke="currentColor"
                     strokeWidth="8"
                     fill="transparent"
+                    className="text-slate-100/80 dark:text-slate-800"
                   />
                   <circle
                     cx="50"
@@ -1030,21 +1031,21 @@ export default function App() {
                     fill="transparent"
                     strokeDasharray="251.2"
                     strokeDashoffset="251.2"
-                    className="opacity-20"
+                    className="opacity-20 text-pink-500"
                   />
                 </svg>
                 <div className="absolute flex flex-col items-center justify-center text-center">
-                  <span className="text-3xl font-black text-slate-700 tracking-tight">0%</span>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Cakupan</span>
+                  <span className="text-3xl font-black text-slate-700 dark:text-slate-200 tracking-tight">0%</span>
+                  <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Cakupan</span>
                 </div>
               </div>
 
               <div className="mt-5 flex flex-col items-center gap-1.5 text-center">
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-200/60 shadow-xs">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/50 shadow-xs">
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                  <span className="text-[9px] font-black text-amber-700 uppercase tracking-widest">Menunggu Input</span>
+                  <span className="text-[9px] font-black text-amber-700 dark:text-amber-400 uppercase tracking-widest">Menunggu Input</span>
                 </div>
-                <p className="text-[11px] text-slate-500 font-semibold max-w-xs leading-relaxed">
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold max-w-xs leading-relaxed">
                   Belum ada PRD aktif yang dianalisis
                 </p>
               </div>
@@ -1053,53 +1054,53 @@ export default function App() {
             {/* Right explanatory steps & visual guide */}
             <div className="md:col-span-12 lg:col-span-7 space-y-4">
               <div className="space-y-1">
-                <h4 className="text-base font-black text-slate-900 flex items-center gap-2">
-                  <LayoutDashboard className="w-4 h-4 text-pink-600" />
+                <h4 className="text-base font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                  <LayoutDashboard className="w-4 h-4 text-pink-600 dark:text-pink-400" />
                   Alur Analisis & Pemetaan Kasus Uji
                 </h4>
-                <p className="text-xs text-slate-500 leading-relaxed font-normal">
+                <p className="text-xs text-slate-500 dark:text-slate-450 leading-relaxed font-normal">
                   Masukkan dokumen PRD (.txt, .docx, .xlsx, atau ketik manual) di panel kiri. QA Copilot akan menguraikan requirement dan menterjemahkannya ke dalam skenario ideal secara otomatis.
                 </p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                <div className="p-3 bg-slate-50/50 border border-slate-100 rounded-xl flex items-start gap-2.5">
-                  <div className="p-1.5 bg-pink-100/60 text-pink-600 rounded-lg">
+                <div className="p-3 bg-slate-50/50 dark:bg-slate-900/30 border border-slate-100 dark:border-slate-800/80 rounded-xl flex items-start gap-2.5">
+                  <div className="p-1.5 bg-pink-100/60 dark:bg-pink-950/50 text-pink-600 dark:text-pink-400 rounded-lg">
                     <FileText className="w-3.5 h-3.5" />
                   </div>
                   <div className="space-y-0.5">
-                    <p className="text-xs font-bold text-slate-800">1. Ekstraksi Otomatis</p>
-                    <p className="text-[10px] text-slate-400">Pecah draft PRD menjadi fungsional atomik.</p>
+                    <p className="text-xs font-bold text-slate-800 dark:text-slate-200">1. Ekstraksi Otomatis</p>
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500">Pecah draft PRD menjadi fungsional atomik.</p>
                   </div>
                 </div>
 
-                <div className="p-3 bg-slate-50/50 border border-slate-100 rounded-xl flex items-start gap-2.5">
-                  <div className="p-1.5 bg-indigo-100/60 text-indigo-600 rounded-lg">
+                <div className="p-3 bg-slate-50/50 dark:bg-slate-900/30 border border-slate-100 dark:border-slate-800/80 rounded-xl flex items-start gap-2.5">
+                  <div className="p-1.5 bg-indigo-100/60 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 rounded-lg">
                     <Shield className="w-3.5 h-3.5" />
                   </div>
                   <div className="space-y-0.5">
-                    <p className="text-xs font-bold text-slate-800">2. Skenario Negatif</p>
-                    <p className="text-[10px] text-slate-400">Penyusunan kasus negatif & batas error.</p>
+                    <p className="text-xs font-bold text-slate-800 dark:text-slate-200">2. Skenario Negatif</p>
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500">Penyusunan kasus negatif & batas error.</p>
                   </div>
                 </div>
 
-                <div className="p-3 bg-slate-50/50 border border-slate-100 rounded-xl flex items-start gap-2.5">
-                  <div className="p-1.5 bg-amber-100/60 text-amber-700 rounded-lg">
+                <div className="p-3 bg-slate-50/50 dark:bg-slate-900/30 border border-slate-100 dark:border-slate-800/80 rounded-xl flex items-start gap-2.5">
+                  <div className="p-1.5 bg-amber-100/60 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 rounded-lg">
                     <Zap className="w-3.5 h-3.5" />
                   </div>
                   <div className="space-y-0.5">
-                    <p className="text-xs font-bold text-slate-800">3. Deteksi Gap</p>
-                    <p className="text-[10px] text-slate-400">Temukan sisa aspek PRD tanpa test case.</p>
+                    <p className="text-xs font-bold text-slate-800 dark:text-slate-200">3. Deteksi Gap</p>
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500">Temukan sisa aspek PRD tanpa test case.</p>
                   </div>
                 </div>
 
-                <div className="p-3 bg-slate-50/50 border border-slate-100 rounded-xl flex items-start gap-2.5">
-                  <div className="p-1.5 bg-emerald-100/60 text-emerald-600 rounded-lg">
+                <div className="p-3 bg-slate-50/50 dark:bg-slate-900/30 border border-slate-100 dark:border-slate-800/80 rounded-xl flex items-start gap-2.5">
+                  <div className="p-1.5 bg-emerald-100/60 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 rounded-lg">
                     <CheckCircle2 className="w-3.5 h-3.5" />
                   </div>
                   <div className="space-y-0.5">
-                    <p className="text-xs font-bold text-slate-800">4. Ekspor Cepat</p>
-                    <p className="text-[10px] text-slate-400">Ambil hasil dalam format XLSX, CSV, Jira.</p>
+                    <p className="text-xs font-bold text-slate-800 dark:text-slate-200">4. Ekspor Cepat</p>
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500">Ambil hasil dalam format XLSX, CSV, Jira.</p>
                   </div>
                 </div>
               </div>
@@ -1723,7 +1724,7 @@ Instructions:
 7. Based on the description, analyze potential root causes and fill the 'rootCause' field with your expert analysis (or how to debug it).
 8. Add a 'devNote' summarizing any critical developer advice, workarounds, or confirmation alerts.
 
-The response must be strictly in ${language} language.`
+Language Instruction: Detect the dominant language of the user input (bug description, steps to reproduce, expected result, actual result, environment) and respond using the same language. Do not translate to Indonesian unless the input is mainly Indonesian. Generate the bug report in the same dominant language as the bug details provided by the user.`
         : `Analyze the uploaded screenshot/UI Image along with the provided user details to generate a highly professional, developer-ready, structured bug report.
 
 Instructions:
@@ -1736,7 +1737,7 @@ Instructions:
 7. Suggest Severity (Blocker, Critical, Major, Medium, Minor) and Priority (High, Medium, Low) levels based on standard QA principles.
 8. Write a constructive 'devNote' with possible frontend/backend fixes or QA guidance.
 
-The response must be strictly in ${language} language.`;
+Language Instruction: Detect the dominant language of the user input (bug description, steps to reproduce, expected result, actual result, environment) and respond using the same language. Do not translate to Indonesian unless the input is mainly Indonesian. Generate the bug report in the same dominant language as the bug details provided by the user.`;
 
       parts.push({ text: bugPrompt });
       contents.push({ role: 'user', parts });
@@ -1768,7 +1769,8 @@ The response must be strictly in ${language} language.`;
             required: ["title", "summary", "steps", "expected", "actual", "severity", "priority", "devNote"]
           }
         },
-        systemInstruction: `Anda adalah QA Lead & Bug Analysis Specialist. Tugas Anda adalah menganalisis input atau screenshot bug mentah secara cermat, membuat laporan bug terstruktur dengan Severity dan Priority yang tepat dan akurat untuk developer. CRITICAL: Be extremely concise, direct, and professional. Strictly avoid repeating words, phrases, sentences, or clauses. Limit each field's value to at most 30 words.`
+        systemInstruction: `You are a QA Lead & Bug Analysis Specialist. Your task is to analyze raw bug inputs or user screenshots carefully and generate a structured bug report with appropriate Severity and Priority levels for developers. CRITICAL: Be extremely concise, direct, and professional. Strictly avoid repeating words, phrases, sentences, or clauses. Limit each field's value to at most 30 words.
+Detect the dominant language of the user input and respond using the same language. Do not translate to Indonesian unless the input is mainly Indonesian. Generate the bug report in the same dominant language as the bug details provided by the user.`
       });
 
       const parsed = robustJSONParse(resultData.text);
@@ -2272,7 +2274,7 @@ Ikuti aturan ketat ini:
 4. Buat rancangan versi requirement yang telah Anda poles menjadi sangat terperinci dan testable (improvedRequirementDraft). JANGAN mengubah alur atau konteks asli, hanya perjelas hal-hal yang ambigu atau luas agar bernilai guna optimal untuk developer dan QA. JANGAN mengarang fungsionalitas di luar konteks utama.
 5. Sediakan catatan penting bagi QA (qaNotes) terkait skenario uji wajib, penekanan edge case, rincian coverage prioritas, penanganan role permission, dsb.
 
-Bahasa laporan wajib mengikuti: ${language}. Komunikasi harus ramah, formal, objektif, dan bernada profesional.`;
+Language Instruction: Detect the dominant language of the user input (the requirement or PRD input) and respond using the same language. Do not translate to Indonesian unless the input is mainly Indonesian. Analyze and rewrite the requirement in the same dominant language as the requirement/PRD input. The communication should be formal, objective, and professional. Regardless of the language of these instructions, all output field values (summary, explanation, suggestedRewrite, improvedRequirementDraft, qaNotes) must be returned in the detected dominant language.`;
 
       parts.push({ text: reqPrompt });
       contents.push({ role: 'user', parts });
@@ -2306,7 +2308,7 @@ Bahasa laporan wajib mengikuti: ${language}. Komunikasi harus ramah, formal, obj
             required: ["qualityScore", "qualityLabel", "summary", "issuesFound", "improvedRequirementDraft", "qaNotes"]
           }
         },
-        systemInstruction: "Anda adalah QA Director & Requirement Quality Analyst berpengalaman. Anda bertugas menganalisis dokumen requirement fungsional agar jelas, lengkap, bebas ambiguitas, dan sepenuhnya siap uji. CRITICAL: Be extremely concise, direct, and professional. Strictly avoid repeating words, phrases, sentences, or clauses. Limit each field's value to at most 30 words."
+        systemInstruction: "You are an experienced QA Director & Requirement Quality Analyst. Your task is to analyze functional requirement documents to ensure they are clear, complete, unambiguous, and fully ready for testing. CRITICAL: Be extremely concise, direct, and professional. Strictly avoid repeating words, phrases, sentences, or clauses. Limit each field's value to at most 30 words. Detect the dominant language of the user input and respond using the same language. Do not translate to Indonesian unless the input is mainly Indonesian. Analyze and rewrite the requirement in the same dominant language as the requirement/PRD input."
       });
 
       const parsed = robustJSONParse(resultData.text);
