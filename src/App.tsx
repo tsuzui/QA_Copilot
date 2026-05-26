@@ -26,6 +26,7 @@ import {
   Info,
   Clock,
   ArrowLeft,
+  ArrowRight,
   FileBox,
   PieChart,
   CopyPlus,
@@ -147,7 +148,7 @@ const AppLogo = ({ size = "md", className = "", theme = "dark" }: { size?: "sm" 
               </span>
             </span>
           </h1>
-          {size === "md" && <p className={cn("text-[9px] uppercase tracking-widest font-black mt-1", isDark ? "text-slate-400" : "text-slate-500")}>by tsuzui</p>}
+
         </div>
       )}
     </div>
@@ -516,6 +517,18 @@ export default function App() {
   
   // Navigation state
   const [appPage, setAppPage] = useState<'home' | 'generator' | 'coverage' | 'bug_report' | 'requirement_checker'>('home');
+  
+  // Interactive Walkthrough for "How It Works"
+  const [activeJourneyStep, setActiveJourneyStep] = useState(0);
+  const [isWalkthroughTimerPaused, setIsWalkthroughTimerPaused] = useState(false);
+
+  useEffect(() => {
+    if (appPage !== 'home' || isWalkthroughTimerPaused) return;
+    const interval = setInterval(() => {
+      setActiveJourneyStep((prev) => (prev + 1) % 4);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [appPage, isWalkthroughTimerPaused]);
   
   useEffect(() => {
     if (appPage === 'home') {
@@ -2509,28 +2522,28 @@ Language Instruction: Detect the dominant language of the user input (the requir
               <AppLogo />
             </div>
 
-            <nav className="hidden lg:flex items-center gap-8 bg-white/5 backdrop-blur-xl px-8 py-3 rounded-2xl border border-white/10 shadow-2xl">
+            <nav className="hidden lg:flex items-center gap-4 bg-white/5 backdrop-blur-xl px-6 py-2 rounded-2xl border border-white/10 shadow-2xl">
               <button 
                 onClick={() => document.getElementById('tools')?.scrollIntoView({ behavior: 'smooth' })}
-                className="text-[10px] font-black uppercase tracking-widest text-slate-300 hover:text-white transition-colors"
+                className="text-[10px] font-black uppercase tracking-widest text-slate-300 hover:text-white px-3 py-1.5 rounded-xl hover:bg-white/10 hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
               >
                 Tools
               </button>
               <button 
                 onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
-                className="text-[10px] font-black uppercase tracking-widest text-slate-300 hover:text-white transition-colors"
+                className="text-[10px] font-black uppercase tracking-widest text-slate-300 hover:text-white px-3 py-1.5 rounded-xl hover:bg-white/10 hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
               >
                 How it Works
               </button>
               <button 
                 onClick={() => document.getElementById('why-qa')?.scrollIntoView({ behavior: 'smooth' })}
-                className="text-[10px] font-black uppercase tracking-widest text-slate-300 hover:text-white transition-colors"
+                className="text-[10px] font-black uppercase tracking-widest text-slate-300 hover:text-white px-3 py-1.5 rounded-xl hover:bg-white/10 hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
               >
                 Why QA Copilot
               </button>
               <button 
                 onClick={() => document.getElementById('faq')?.scrollIntoView({ behavior: 'smooth' })}
-                className="text-[10px] font-black uppercase tracking-widest text-slate-300 hover:text-white transition-colors"
+                className="text-[10px] font-black uppercase tracking-widest text-slate-300 hover:text-white px-3 py-1.5 rounded-xl hover:bg-white/10 hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
               >
                 FAQ
               </button>
@@ -2855,15 +2868,19 @@ Language Instruction: Detect the dominant language of the user input (the requir
           </div>
 
           {/* Section 2: Tools Section - Solid clean background with soft gradients */}
-          <div id="tools" className="relative z-20 bg-[#070b1a] border-t border-slate-900/60 py-32 px-6 sm:px-10">
-            <div className="max-w-7xl mx-auto">
-              <div className="text-center mb-20">
-                <span className="text-blue-500 text-[10px] font-black uppercase tracking-[0.3em] mb-4 block">Integrated Toolkit</span>
-                <h3 className="text-4xl sm:text-5xl font-black text-white mb-4 tracking-tight">
-                  Choose Your Intelligent Tool
+          <div id="tools" className="relative z-20 bg-[#070b1a] border-t border-slate-900/60 py-32 px-6 sm:px-10 overflow-hidden">
+            {/* Deep Ambient atmospheric blur spots */}
+            <div className="absolute top-1/4 left-1/10 w-[400px] h-[400px] bg-pink-500/5 rounded-full blur-3xl pointer-events-none select-none" />
+            <div className="absolute bottom-1/4 right-1/10 w-[400px] h-[400px] bg-emerald-500/5 rounded-full blur-3xl pointer-events-none select-none" />
+            
+            <div className="max-w-7xl mx-auto relative z-10">
+              <div className="text-center mb-20 space-y-4">
+                <span className="text-indigo-400 text-[10px] font-black uppercase tracking-[0.34em] block">INTEGRATED POWER-SUITE</span>
+                <h3 className="text-4xl sm:text-5xl font-black text-white tracking-tight leading-none bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent">
+                  Choose Your Verification Tool
                 </h3>
-                <p className="text-slate-400 font-medium text-sm sm:text-base max-w-2xl mx-auto">
-                  Select a dedicated verification engine to automate documentation, analyze specs, audit requirements, or map issues.
+                <p className="text-slate-400 font-medium text-xs sm:text-sm max-w-2xl mx-auto leading-relaxed">
+                  Four high-precision AI verification engines contextually tuned to build perfect test designs, map integration gaps, audit specifications, and log issues flawlessly.
                 </p>
               </div>
 
@@ -2873,22 +2890,46 @@ Language Instruction: Detect the dominant language of the user input (the requir
                   initial={{ y: 30, opacity: 0 }}
                   whileInView={{ y: 0, opacity: 1 }}
                   viewport={{ once: true, margin: "-100px" }}
-                  className="bg-white/5 backdrop-blur-md p-8 rounded-[2rem] border border-white/10 hover:border-pink-500/40 hover:bg-white/10 transition-all duration-300 group flex flex-col justify-between"
+                  transition={{ duration: 0.5, delay: 0 }}
+                  className="bg-white/[0.02] backdrop-blur-md p-8 rounded-[2.5rem] border border-white/5 hover:border-pink-500/30 hover:bg-white/[0.04] transition-all duration-300 group flex flex-col justify-between relative overflow-hidden"
                 >
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-pink-600/5 rounded-full blur-2xl pointer-events-none" />
                   <div>
-                    <div className="w-12 h-12 bg-pink-600 rounded-2xl flex items-center justify-center mb-6 shadow-md group-hover:scale-110 transition-transform">
-                      <Zap className="text-white w-5 h-5 fill-white" />
+                    {/* Header Row */}
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="w-12 h-12 bg-pink-600/10 border border-pink-500/20 text-pink-500 rounded-2xl flex items-center justify-center shadow-md group-hover:scale-110 group-hover:bg-pink-600 group-hover:text-white transition-all duration-300">
+                        <Zap className="w-5 h-5 fill-none group-hover:fill-white" />
+                      </div>
+                      <span className="text-[9px] font-black uppercase tracking-wider text-pink-400 bg-pink-500/10 px-2.5 py-1 rounded-md">
+                        AI Draft Engine
+                      </span>
                     </div>
-                    <h3 className="text-xl font-bold text-white mb-3 tracking-tight">Test Case Generator</h3>
-                    <p className="text-slate-300 text-xs leading-relaxed mb-8">
-                      Automatically map and write scenarios (positive, negative, edge-case) directly from product description drafts, tech specs, or designs.
+
+                    <h3 className="text-xl font-black text-white mb-3 tracking-tight group-hover:text-pink-400 transition-colors">
+                      Test Case Generator
+                    </h3>
+                    <p className="text-slate-400 text-xs leading-relaxed mb-6">
+                      Convert specification files, visual mockups, or pasted technical descriptions instantly into thorough Gherkin or spreadsheet-ready scenarios.
                     </p>
+
+                    {/* Compact Specs list */}
+                    <ul className="space-y-2 mb-8 text-[11px] font-semibold text-slate-500">
+                      <li className="flex items-center gap-2">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-pink-500/80 shrink-0" />
+                        <span>Positive, Negatives & Edges</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-pink-500/80 shrink-0" />
+                        <span>Export Gherkin / CSV / Sheets</span>
+                      </li>
+                    </ul>
                   </div>
+
                   <button 
                     onClick={() => { setAppPage('generator'); setActiveFeature('generator'); }}
-                    className="w-full py-3 bg-pink-600 hover:bg-pink-500 text-white font-black uppercase tracking-widest text-[10px] rounded-xl transition-colors shadow-lg shadow-pink-600/25 active:scale-95"
+                    className="w-full py-3 bg-pink-600 hover:bg-pink-700 text-white font-black uppercase tracking-widest text-[10px] rounded-xl transition-all duration-300 shadow-md shadow-pink-600/10 hover:shadow-pink-600/20 active:scale-95 cursor-pointer"
                   >
-                    Start Generator
+                    Open Generator
                   </button>
                 </motion.div>
 
@@ -2897,22 +2938,46 @@ Language Instruction: Detect the dominant language of the user input (the requir
                   initial={{ y: 30, opacity: 0 }}
                   whileInView={{ y: 0, opacity: 1 }}
                   viewport={{ once: true, margin: "-100px" }}
-                  className="bg-white/5 backdrop-blur-md p-8 rounded-[2rem] border border-emerald-500/20 hover:border-emerald-500/50 hover:bg-white/10 transition-all duration-300 group flex flex-col justify-between"
+                  transition={{ duration: 0.5, delay: 0.1 }}
+                  className="bg-white/[0.02] backdrop-blur-md p-8 rounded-[2.5rem] border border-white/5 hover:border-emerald-500/30 hover:bg-white/[0.04] transition-all duration-300 group flex flex-col justify-between relative overflow-hidden"
                 >
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-600/5 rounded-full blur-2xl pointer-events-none" />
                   <div>
-                    <div className="w-12 h-12 bg-emerald-600 rounded-2xl flex items-center justify-center mb-6 shadow-md group-hover:scale-110 transition-transform">
-                      <PieChart className="text-white w-5 h-5" />
+                    {/* Header Row */}
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="w-12 h-12 bg-emerald-600/10 border border-emerald-500/20 text-emerald-400 rounded-2xl flex items-center justify-center shadow-md group-hover:scale-110 group-hover:bg-emerald-600 group-hover:text-white transition-all duration-300">
+                        <PieChart className="w-5 h-5" />
+                      </div>
+                      <span className="text-[9px] font-black uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-md">
+                        Coverage Sensor
+                      </span>
                     </div>
-                    <h3 className="text-xl font-bold text-white mb-3 tracking-tight">Coverage Checker</h3>
-                    <p className="text-slate-300 text-xs leading-relaxed mb-8">
-                      Upload your current test procedures and map them instantly with system requirements to automatically detect untried paths or gaps.
+
+                    <h3 className="text-xl font-black text-white mb-3 tracking-tight group-hover:text-emerald-400 transition-colors">
+                      Coverage Analyzer
+                    </h3>
+                    <p className="text-slate-400 text-xs leading-relaxed mb-6">
+                      Upload your legacy spreadsheets of test procedures side-by-side with product specifications to isolate omitted paths instantly.
                     </p>
+
+                    {/* Compact Specs list */}
+                    <ul className="space-y-2 mb-8 text-[11px] font-semibold text-slate-500">
+                      <li className="flex items-center gap-2">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500/80 shrink-0" />
+                        <span>Traceability matrix generator</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500/80 shrink-0" />
+                        <span>Highlight forgotten edge lanes</span>
+                      </li>
+                    </ul>
                   </div>
+
                   <button 
                     onClick={() => { setAppPage('coverage'); setActiveFeature('coverage'); }}
-                    className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase tracking-widest text-[10px] rounded-xl transition-colors shadow-lg shadow-emerald-600/25 active:scale-95"
+                    className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-black uppercase tracking-widest text-[10px] rounded-xl transition-all duration-300 shadow-md shadow-emerald-600/10 hover:shadow-emerald-600/20 active:scale-95 cursor-pointer"
                   >
-                    Check Coverage
+                    Assess Coverage
                   </button>
                 </motion.div>
 
@@ -2921,22 +2986,46 @@ Language Instruction: Detect the dominant language of the user input (the requir
                   initial={{ y: 30, opacity: 0 }}
                   whileInView={{ y: 0, opacity: 1 }}
                   viewport={{ once: true, margin: "-100px" }}
-                  className="bg-white/5 backdrop-blur-md p-8 rounded-[2rem] border border-violet-500/20 hover:border-violet-500/50 hover:bg-white/10 transition-all duration-300 group flex flex-col justify-between"
+                  transition={{ duration: 0.5, delay: 0.2 }}
+                  className="bg-white/[0.02] backdrop-blur-md p-8 rounded-[2.5rem] border border-white/5 hover:border-violet-500/30 hover:bg-white/[0.04] transition-all duration-300 group flex flex-col justify-between relative overflow-hidden"
                 >
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-violet-600/5 rounded-full blur-2xl pointer-events-none" />
                   <div>
-                    <div className="w-12 h-12 bg-violet-600 rounded-2xl flex items-center justify-center mb-6 shadow-md group-hover:scale-110 transition-transform">
-                      <ClipboardCheck className="text-white w-5 h-5" />
+                    {/* Header Row */}
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="w-12 h-12 bg-violet-600/10 border border-violet-500/20 text-violet-400 rounded-2xl flex items-center justify-center shadow-md group-hover:scale-110 group-hover:bg-violet-600 group-hover:text-white transition-all duration-300">
+                        <ClipboardCheck className="w-5 h-5" />
+                      </div>
+                      <span className="text-[9px] font-black uppercase tracking-wider text-violet-400 bg-violet-500/10 px-2.5 py-1 rounded-md">
+                        Quality Checker
+                      </span>
                     </div>
-                    <h3 className="text-xl font-bold text-white mb-3 tracking-tight">Requirement Quality</h3>
-                    <p className="text-slate-300 text-xs leading-relaxed mb-8">
-                      Audit writing quality on drafts for logical completeness and logical traps, finding contradictions early before coding begins.
+
+                    <h3 className="text-xl font-black text-white mb-3 tracking-tight group-hover:text-violet-400 transition-colors">
+                      Requirement Quality Checker
+                    </h3>
+                    <p className="text-slate-400 text-xs leading-relaxed mb-6">
+                      Scan product descriptions and specifications for ambiguous wording, logical gaps, contradictory requirements, and missing fallback routes.
                     </p>
+
+                    {/* Compact Specs list */}
+                    <ul className="space-y-2 mb-8 text-[11px] font-semibold text-slate-500">
+                      <li className="flex items-center gap-2">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-violet-500/80 shrink-0" />
+                        <span>Quality score & logical index</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-violet-500/80 shrink-0" />
+                        <span>Drafting suggestions block</span>
+                      </li>
+                    </ul>
                   </div>
+
                   <button 
                     onClick={() => setAppPage('requirement_checker')}
-                    className="w-full py-3 bg-violet-600 hover:bg-violet-500 text-white font-black uppercase tracking-widest text-[10px] rounded-xl transition-colors shadow-lg shadow-violet-600/25 active:scale-95"
+                    className="w-full py-3 bg-violet-600 hover:bg-violet-700 text-white font-black uppercase tracking-widest text-[10px] rounded-xl transition-all duration-300 shadow-md shadow-violet-600/10 hover:shadow-violet-600/20 active:scale-95 cursor-pointer"
                   >
-                    Audit Requirements
+                    Check Quality
                   </button>
                 </motion.div>
 
@@ -2945,22 +3034,46 @@ Language Instruction: Detect the dominant language of the user input (the requir
                   initial={{ y: 30, opacity: 0 }}
                   whileInView={{ y: 0, opacity: 1 }}
                   viewport={{ once: true, margin: "-100px" }}
-                  className="bg-white/5 backdrop-blur-md p-8 rounded-[2rem] border border-orange-500/20 hover:border-orange-500/50 hover:bg-white/10 transition-all duration-300 group flex flex-col justify-between"
+                  transition={{ duration: 0.5, delay: 0.3 }}
+                  className="bg-white/[0.02] backdrop-blur-md p-8 rounded-[2.5rem] border border-white/5 hover:border-orange-500/30 hover:bg-white/[0.04] transition-all duration-300 group flex flex-col justify-between relative overflow-hidden"
                 >
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-orange-600/5 rounded-full blur-2xl pointer-events-none" />
                   <div>
-                    <div className="w-12 h-12 bg-orange-600 rounded-2xl flex items-center justify-center mb-6 shadow-md group-hover:scale-110 transition-transform">
-                      <Bug className="text-white w-5 h-5" />
+                    {/* Header Row */}
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="w-12 h-12 bg-orange-600/10 border border-orange-500/20 text-orange-400 rounded-2xl flex items-center justify-center shadow-md group-hover:scale-110 group-hover:bg-orange-600 group-hover:text-white transition-all duration-300">
+                        <Bug className="w-5 h-5" />
+                      </div>
+                      <span className="text-[9px] font-black uppercase tracking-wider text-orange-400 bg-orange-500/10 px-2.5 py-1 rounded-md">
+                        Bug Reporter
+                      </span>
                     </div>
-                    <h3 className="text-xl font-bold text-white mb-3 tracking-tight">Bug Report Gen</h3>
-                    <p className="text-slate-300 text-xs leading-relaxed mb-8">
-                       Turn rough screenshot uploads, unstructured mobile observations, or rapid developer chat text logs into formal industry bugs.
+
+                    <h3 className="text-xl font-black text-white mb-3 tracking-tight group-hover:text-orange-400 transition-colors">
+                      Bug Report Generator
+                    </h3>
+                    <p className="text-slate-400 text-xs leading-relaxed mb-6">
+                      Structure screenshots, unorganized bullet-points, or audio transcripts instantly into high-grade developer-ready Jira and Linear bug tickets.
                     </p>
+
+                    {/* Compact Specs list */}
+                    <ul className="space-y-2 mb-8 text-[11px] font-semibold text-slate-500">
+                      <li className="flex items-center gap-2">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-orange-500/80 shrink-0" />
+                        <span>Preconditions & clear steps</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-orange-500/80 shrink-0" />
+                        <span>Screenshot analysis module</span>
+                      </li>
+                    </ul>
                   </div>
+
                   <button 
                     onClick={() => setAppPage('bug_report')}
-                    className="w-full py-3 bg-orange-600 hover:bg-orange-500 text-white font-black uppercase tracking-widest text-[10px] rounded-xl transition-colors shadow-lg shadow-orange-600/25 active:scale-95"
+                    className="w-full py-3 bg-orange-600 hover:bg-orange-700 text-white font-black uppercase tracking-widest text-[10px] rounded-xl transition-all duration-300 shadow-md shadow-orange-600/10 hover:shadow-orange-600/20 active:scale-95 cursor-pointer"
                   >
-                    Open Bug Report
+                    Generate Bug Report
                   </button>
                 </motion.div>
               </div>
@@ -3152,117 +3265,442 @@ Language Instruction: Detect the dominant language of the user input (the requir
             </div>
 
             <div className="max-w-7xl mx-auto relative z-10">
-              <div className="text-center mb-20">
-                <span className="text-blue-600 text-[10px] font-black uppercase tracking-[0.3em] mb-4 block">Simple Workflow</span>
+              <div className="text-center mb-16">
+                <span className="text-indigo-600 text-[10px] font-black uppercase tracking-[0.3em] mb-4 block">Interactive Guide</span>
                 <h3 className="text-4xl sm:text-5xl font-black text-slate-900 mb-4 tracking-tight">
                   How It Works
                 </h3>
                 <p className="text-slate-500 font-semibold text-sm sm:text-base max-w-2xl mx-auto">
-                  Four minimal steps to produce clean, formatted, production-ready QA documentation assets automatically.
+                  Take an interactive tour of the automated pipeline that transforms loose specifications into high-coverage QA documentation.
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 relative">
-                {[
-                  { 
-                    icon: <Upload className="w-5 h-5" />, 
-                    title: "1. Upload or Write Specs", 
-                    desc: "Upload PRDs, product specifications, screenshots, or paste technical text drafts." 
-                  },
-                  { 
-                    icon: <Search className="w-5 h-5" />, 
-                    title: "2. AI Context Analysis", 
-                    desc: "The platform reads input specs to isolate logical paths, entities, and flow bounds." 
-                  },
-                  { 
-                    icon: <FileText className="w-5 h-5" />, 
-                    title: "3. Structured QA Drafting", 
-                    desc: "Generate comprehensive, mapped scenarios covering positive, negative, and edge-case criteria." 
-                  },
-                  { 
-                    icon: <Download className="w-5 h-5" />, 
-                    title: "4. Export or Continue", 
-                    desc: "Download complete test plans to XLSX or CSV sheets instantly, ready for Jira or TestRail." 
-                  }
-                ].map((step, idx) => (
-                  <motion.div 
-                    key={idx}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: idx * 0.15 }}
-                    className="bg-white border border-slate-200 shadow-md shadow-slate-200/50 hover:shadow-xl transition-shadow p-8 rounded-[2rem] flex flex-col items-center text-center relative z-10"
-                  >
-                    <div className="absolute top-4 right-5 text-3xl font-black text-slate-100 italic select-none">
-                      0{idx + 1}
+              {/* Interactive Widget Platform Grid */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+                
+                {/* Left Side: Step Selectors (Vertical Stack) */}
+                <div className="lg:col-span-12 xl:col-span-5 space-y-4 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0 xl:flex xl:flex-col xl:gap-4 xl:space-y-0">
+                  {[
+                    {
+                      stepNum: "01",
+                      title: "Upload or Write Specs",
+                      shortDesc: "Input raw requirements, technical memos, or design uploads.",
+                      colorClass: "border-blue-500 text-blue-600 bg-blue-50",
+                      glowClass: "shadow-blue-200/55",
+                      badge: "bg-blue-100 text-blue-700"
+                    },
+                    {
+                      stepNum: "02",
+                      title: "AI Context Analysis",
+                      shortDesc: "Advanced AI engine reads and builds path mappings.",
+                      colorClass: "border-indigo-500 text-indigo-600 bg-indigo-50",
+                      glowClass: "shadow-indigo-200/55",
+                      badge: "bg-indigo-100 text-indigo-700"
+                    },
+                    {
+                      stepNum: "03",
+                      title: "Structured QA Drafting",
+                      shortDesc: "Convert isolated logical trees into real formatted test cases.",
+                      colorClass: "border-violet-500 text-violet-600 bg-violet-50",
+                      glowClass: "shadow-violet-200/55",
+                      badge: "bg-violet-100 text-violet-700"
+                    },
+                    {
+                      stepNum: "04",
+                      title: "Export or Continue",
+                      shortDesc: "Synchronize directly with spreadsheet editors or Jira sheets.",
+                      colorClass: "border-pink-500 text-pink-600 bg-pink-50",
+                      glowClass: "shadow-pink-200/55",
+                      badge: "bg-pink-100 text-pink-700"
+                    }
+                  ].map((step, idx) => {
+                    const isActive = activeJourneyStep === idx;
+                    return (
+                      <button
+                        key={idx}
+                        onClick={() => {
+                          setActiveJourneyStep(idx);
+                          setIsWalkthroughTimerPaused(true);
+                        }}
+                        className={cn(
+                          "w-full text-left p-6 rounded-2xl border transition-all duration-300 relative overflow-hidden group focus:outline-none cursor-pointer flex gap-5 items-start",
+                          isActive 
+                            ? "bg-white border-slate-200 shadow-xl " + step.glowClass
+                            : "bg-transparent border-transparent hover:bg-slate-100/60"
+                        )}
+                      >
+                        {/* Dynamic Step Active Line Tracker */}
+                        {isActive && (
+                          <div className={cn("absolute left-0 top-0 bottom-0 w-1.5", 
+                            idx === 0 ? "bg-blue-600" : 
+                            idx === 1 ? "bg-indigo-600" : 
+                            idx === 2 ? "bg-violet-600" : "bg-pink-600"
+                          )} />
+                        )}
+
+                        {/* Step Circle */}
+                        <div className={cn(
+                          "w-10 h-10 rounded-xl shrink-0 flex items-center justify-center font-black text-sm border tracking-tighter transition-all duration-300",
+                          isActive 
+                            ? step.colorClass
+                            : "bg-slate-100 border-slate-200/60 text-slate-400 group-hover:bg-slate-200/50"
+                        )}>
+                          {step.stepNum}
+                        </div>
+
+                        {/* Texts */}
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className={cn(
+                              "font-black text-sm tracking-tight transition-colors",
+                              isActive ? "text-slate-900" : "text-slate-500 group-hover:text-slate-700"
+                            )}>
+                              {step.title}
+                            </span>
+                            {isActive && (
+                              <span className={cn("text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full", step.badge)}>
+                                ACTIVE
+                              </span>
+                            )}
+                          </div>
+                          <p className={cn(
+                            "text-xs transition-colors leading-relaxed",
+                            isActive ? "text-slate-600 font-medium" : "text-slate-400 font-normal"
+                          )}>
+                            {step.shortDesc}
+                          </p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Right Side: High Fidelity Dark Terminal Interactive Window */}
+                <div className="lg:col-span-12 xl:col-span-7">
+                  <div className="bg-[#091024] border border-white/10 shadow-2xl rounded-3xl overflow-hidden relative group">
+                    
+                    {/* Window Top Bar (Chrome / macOS) */}
+                    <div className="bg-slate-950/40 border-b border-white/5 px-6 py-4 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-red-500/80" />
+                        <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
+                        <div className="w-3 h-3 rounded-full bg-green-500/80" />
+                      </div>
+                      <div className="text-[10px] font-mono font-bold text-slate-500 tracking-wider flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        copilot_sandbox_v1.0.tsx
+                      </div>
+                      <div className="text-[10px] font-bold text-slate-500 font-mono tracking-widest uppercase">
+                        SESSION OK
+                      </div>
                     </div>
-                    <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center border border-blue-100 mb-6 font-bold shadow-sm">
-                      {step.icon}
+
+                    {/* Window Content Layout */}
+                    <div className="p-6 md:p-8 min-h-[360px] flex flex-col justify-center relative z-10 text-xs text-slate-300 font-mono">
+                      
+                      {/* Step 01 Preview Frame */}
+                      {activeJourneyStep === 0 && (
+                        <motion.div 
+                          initial={{ opacity: 0, scale: 0.98 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ duration: 0.3 }}
+                          className="space-y-6"
+                        >
+                          <div className="space-y-1.5">
+                            <div className="text-indigo-400 font-bold">&gt; upload_requirements --file=prd_payment_gateway_v3.pdf</div>
+                            <div className="text-slate-500 text-[11px]">Initiating secure workspace file transfer block...</div>
+                          </div>
+
+                          {/* Simulated Drag & Drop Zone */}
+                          <div className="border border-dashed border-sky-500/30 bg-sky-950/20 rounded-2xl p-6 text-center space-y-4">
+                            <div className="w-12 h-12 bg-sky-500/10 text-sky-400 border border-sky-400/20 rounded-2xl flex items-center justify-center mx-auto shadow-inner shadow-sky-500/20">
+                              <Upload className="w-6 h-6 animate-bounce" />
+                            </div>
+                            <div className="space-y-1">
+                              <p className="font-bold text-slate-200">prd_checkout_flow_v3.docx</p>
+                              <p className="text-[9px] text-slate-500 uppercase tracking-widest">Size: 964 KB • DOCX Document File</p>
+                            </div>
+                            
+                            {/* Loading Progress Bar */}
+                            <div className="space-y-1 max-w-xs mx-auto">
+                              <div className="flex justify-between items-center text-[9px] text-slate-400 font-bold">
+                                <span>STATUS: READY</span>
+                                <span className="text-emerald-400">100% SUCCESS</span>
+                              </div>
+                              <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                                <motion.div 
+                                  initial={{ width: 0 }}
+                                  animate={{ width: "100%" }}
+                                  transition={{ duration: 1.2, ease: "easeOut" }}
+                                  className="h-full bg-gradient-to-r from-blue-500 to-indigo-500" 
+                                />
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-2.5 text-emerald-400">
+                            <CheckCircle2 className="w-4 h-4 shrink-0" />
+                            <span>Metadata indexed. 14 main requirement modules identified in 0.8s!</span>
+                          </div>
+                        </motion.div>
+                      )}
+
+                      {/* Step 02 Preview Frame */}
+                      {activeJourneyStep === 1 && (
+                        <motion.div 
+                          initial={{ opacity: 0, scale: 0.98 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ duration: 0.3 }}
+                          className="space-y-4"
+                        >
+                          <div className="space-y-1.5">
+                            <div className="text-indigo-400 font-bold">&gt; parse_specifications --engine=ai-pro-v3</div>
+                            <div className="text-slate-500 text-[11px]">Engaging syntactic mapping and boundary identification...</div>
+                          </div>
+
+                          {/* Analysis list of parsed nodes */}
+                          <div className="space-y-2 border border-white/5 bg-slate-950/50 p-4 rounded-2xl relative">
+                            {/* Glowing focus tag */}
+                            <div className="absolute top-3 right-3 bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 text-[8px] font-bold px-2 py-0.5 rounded-full">
+                              AI AGENT INDEX
+                            </div>
+
+                            <div className="space-y-3">
+                              <div className="flex items-center gap-2 text-slate-100">
+                                <div className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
+                                <span className="font-bold">🔑 Section 1.4: Checkout Controller</span>
+                                <span className="text-[10px] text-slate-500 font-bold">(Isolating logic bounds)</span>
+                              </div>
+                              
+                              <div className="pl-4 space-y-1.5 text-[11px] text-slate-400">
+                                <div className="flex justify-between border-b border-white/[0.03] pb-1">
+                                  <span>↳ Flow 01: Anonymous checkouts</span>
+                                  <span className="text-indigo-300 font-bold">Passed to Schema</span>
+                                </div>
+                                <div className="flex justify-between border-b border-white/[0.03] pb-1">
+                                  <span>↳ Flow 02: Stripe payment webhook fails</span>
+                                  <span className="text-amber-400 font-bold">Edge-case flagged</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span>↳ Flow 03: Coupon apply logic check</span>
+                                  <span className="text-indigo-300 font-bold">Passed to Schema</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex gap-2 p-3 bg-indigo-500/10 border border-indigo-500/20 rounded-xl text-indigo-300 text-[11px]">
+                            <Search className="w-4 h-4 shrink-0 mt-0.5 text-indigo-400 animate-pulse" />
+                            <div>
+                              <strong>Mapped logic:</strong> Built a complete test scenarios outline matrix mapping 3 functional logic gates, ready for full draft generation.
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+
+                      {/* Step 03 Preview Frame */}
+                      {activeJourneyStep === 2 && (
+                        <motion.div 
+                          initial={{ opacity: 0, scale: 0.98 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ duration: 0.3 }}
+                          className="space-y-5"
+                        >
+                          <div className="space-y-1.5">
+                            <div className="text-indigo-400 font-bold">&gt; generate_test_cases --format=formal</div>
+                            <div className="text-slate-500 text-[11px]">Creating professional test case documents...</div>
+                          </div>
+
+                          {/* Created test results mockup */}
+                          <div className="space-y-2.5">
+                            {[
+                              { id: "TC-001", type: "Positive", title: "Checkout success with saved credit card" },
+                              { id: "TC-002", type: "Negative", title: "Checkout failure triggers matching warning reason" },
+                              { id: "TC-003", type: "Edge Case", title: "Checkout with expired stored token API response drop" },
+                            ].map((tc, index) => (
+                              <div 
+                                key={index}
+                                className="border border-white/5 bg-slate-950/40 px-4 py-3 rounded-xl flex items-center justify-between gap-3 text-[11px]"
+                              >
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  <span className="font-bold text-slate-500 shrink-0">{tc.id}</span>
+                                  <span className="truncate text-slate-200 font-semibold">{tc.title}</span>
+                                </div>
+                                <span className={cn(
+                                  "text-[8px] font-black uppercase shrink-0 px-2 py-0.5 rounded-full border",
+                                  tc.type === "Positive" ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/25" :
+                                  tc.type === "Negative" ? "bg-red-500/15 text-red-400 border-red-500/25" :
+                                  "bg-indigo-500/15 text-indigo-400 border-indigo-500/25"
+                                )}>
+                                  {tc.type}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+
+                          <div className="text-[10px] text-slate-500 text-right font-bold italic leading-none">
+                            Draft completed: 38 scenarios compiled successfully.
+                          </div>
+                        </motion.div>
+                      )}
+
+                      {/* Step 04 Preview Frame */}
+                      {activeJourneyStep === 3 && (
+                        <motion.div 
+                          initial={{ opacity: 0, scale: 0.98 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ duration: 0.3 }}
+                          className="space-y-6"
+                        >
+                          <div className="space-y-1.5">
+                            <div className="text-indigo-400 font-bold">&gt; export_plans --to=sheets</div>
+                            <div className="text-slate-500 text-[11px]">Compiling structured worksheets...</div>
+                          </div>
+
+                          {/* Beautiful Export Interface */}
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex flex-col items-center text-center justify-center space-y-2 group">
+                              <div className="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                                <Download className="w-4 h-4" />
+                              </div>
+                              <div className="font-bold text-slate-200 text-[11px]">Download Excel</div>
+                              <span className="text-[8px] text-slate-500 uppercase tracking-wider">Spreadsheet (XLSX)</span>
+                            </div>
+                            
+                            <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20 flex flex-col items-center text-center justify-center space-y-2">
+                              <div className="w-8 h-8 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center">
+                                <FileText className="w-4 h-4" />
+                              </div>
+                              <div className="font-bold text-slate-200 text-[11px]">Download CSV</div>
+                              <span className="text-[8px] text-slate-500 uppercase tracking-wider">Plain Text (CSV)</span>
+                            </div>
+                          </div>
+
+                          {/* Statistics Block */}
+                          <div className="bg-slate-950/60 border border-white/5 rounded-2xl p-4 flex justify-between items-center text-center">
+                            <div className="space-y-0.5">
+                              <div className="text-lg font-black text-white leading-none">38</div>
+                              <div className="text-[8px] font-bold text-slate-500 uppercase tracking-widest leading-none">Scenarios</div>
+                            </div>
+                            <div className="w-px h-8 bg-white/5" />
+                            <div className="space-y-0.5">
+                              <div className="text-lg font-black text-indigo-400 leading-none">100%</div>
+                              <div className="text-[8px] font-bold text-slate-500 uppercase tracking-widest leading-none">Traceability</div>
+                            </div>
+                            <div className="w-px h-8 bg-white/5" />
+                            <div className="space-y-0.5">
+                              <div className="text-lg font-black text-emerald-400 leading-none">4.8 Hrs</div>
+                              <div className="text-[8px] font-bold text-slate-500 uppercase tracking-widest leading-none">Time Saved</div>
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+
                     </div>
-                    <h4 className="text-base font-bold text-slate-800 mb-2">{step.title}</h4>
-                    <p className="text-slate-500 text-xs leading-relaxed">{step.desc}</p>
-                  </motion.div>
-                ))}
+
+                    {/* Left & Right floating decorations to make the container feel exceptionally premium */}
+                    <div className="absolute top-1/2 left-4 w-48 h-48 bg-blue-500/5 rounded-full blur-3xl -translate-y-1/2 select-none pointer-events-none" />
+                    <div className="absolute top-1/2 right-4 w-48 h-48 bg-indigo-500/5 rounded-full blur-3xl -translate-y-1/2 select-none pointer-events-none" />
+                  </div>
+                </div>
+
               </div>
             </div>
           </div>
 
-          {/* Section 4: Why QA Copilot Section - Styled with soft blue/indigo theme */}
+          {/* Section 4: Why QA Copilot Section - Styled with a beautiful split-layout benefit list / checklist */}
           <div id="why-qa" className="relative z-20 bg-[#0a1128] py-32 px-6 sm:px-10 overflow-hidden border-b border-white/5">
-            <div className="absolute -top-[300px] left-1/4 w-[600px] h-[600px] bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute -bottom-[300px] right-1/4 w-[600px] h-[600px] bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -top-[300px] left-1/4 w-[600px] h-[600px] bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-[300px] right-1/4 w-[600px] h-[600px] bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
             
             <div className="max-w-7xl mx-auto relative z-10">
-              <div className="text-center mb-20">
-                <span className="text-indigo-400 text-[10px] font-black uppercase tracking-[0.3em] mb-4 block">Proven Benefits</span>
-                <h3 className="text-4xl sm:text-5xl font-black text-white mb-4 tracking-tight">
-                  Why QA Copilot?
-                </h3>
-                <p className="text-slate-300 font-medium text-sm sm:text-base max-w-2xl mx-auto">
-                  Architected to increase testing volume capacity while saving time across entire sprint cycles.
-                </p>
-              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
+                
+                {/* Left Column: Headline and custom metrics to stand out */}
+                <div className="lg:col-span-5 space-y-8">
+                  <div className="space-y-4">
+                    <span className="text-indigo-400 text-[10px] font-black uppercase tracking-[0.3em] block">Proven Benefits</span>
+                    <h3 className="text-4xl sm:text-5xl font-black text-white tracking-tight leading-tight bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent">
+                      Why QA Copilot?
+                    </h3>
+                    <p className="text-slate-400 text-sm font-medium leading-relaxed max-w-md">
+                      An intelligent QA companion built to scale testing bandwidth, find critical edge cases, and eliminate manual specification reviews.
+                    </p>
+                  </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {[
-                  { 
-                    icon: <CheckCircle2 className="w-5 h-5" />, 
-                    title: "Faster QA Documentation", 
-                    desc: "Spend seconds instead of hours building initial plans covering positive, negative, and edge logic scenarios." 
-                  },
-                  { 
-                    icon: <Shield className="w-5 h-5" />, 
-                    title: "Better Requirement Coverage", 
-                    desc: "Analyze logic paths directly side-by-side with specification files to prevent untried gaps from escaping to prod." 
-                  },
-                  { 
-                    icon: <LayoutDashboard className="w-5 h-5" />, 
-                    title: "Clearer Bug Reports", 
-                    desc: "Instantly compile loose notes, system information, and screenshots into comprehensive, Jira-structured bug tickets." 
-                  },
-                  { 
-                    icon: <History className="w-5 h-5" />, 
-                    title: "Reduced Missed Scenarios", 
-                    desc: "Ensure strong integration safety and boundary checks via intelligent, deep edge-case generation coverage." 
-                  }
-                ].map((item, idx) => (
-                  <motion.div 
-                    key={idx} 
-                    initial={{ opacity: 0, y: 15 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: idx * 0.1 }}
-                    className="p-8 rounded-[2rem] bg-white/5 border border-white/10 hover:bg-white/10 hover:border-indigo-400/30 transition-all duration-300 flex flex-col justify-between"
-                  >
-                    <div>
-                      <div className="w-10 h-10 rounded-xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 mb-6 group-hover:scale-110 transition-transform">
+                  {/* High-Impact compact stats and metrics */}
+                  <div className="grid grid-cols-3 gap-4 pt-6 border-t border-white/5">
+                    <div className="space-y-1">
+                      <div className="text-2xl sm:text-3xl font-black text-indigo-400 tracking-tight">10x</div>
+                      <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-tight">Faster Drafts</div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="text-2xl sm:text-3xl font-black text-emerald-400 tracking-tight">100%</div>
+                      <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-tight">Requirement Trace</div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="text-2xl sm:text-3xl font-black text-pink-400 tracking-tight">95%</div>
+                      <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-tight">Precision Level</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Column: Premium Interactive benefit list */}
+                <div className="lg:col-span-7 space-y-4">
+                  {[
+                    { 
+                      icon: <Zap className="w-5 h-5 text-indigo-400" />, 
+                      title: "Faster QA Documentation", 
+                      desc: "Generate complete, professional quality plans covering positive, negative, and edge logic scenarios in seconds.",
+                      label: "Speed Boost"
+                    },
+                    { 
+                      icon: <Shield className="w-5 h-5 text-emerald-400" />, 
+                      title: "Better Requirement Coverage", 
+                      desc: "Directly analyze specifications side-by-side with your test logs to keep gaps or unmapped flows out of production.",
+                      label: "Risk Shield"
+                    },
+                    { 
+                      icon: <Bug className="w-5 h-5 text-orange-400" />, 
+                      title: "Clearer Bug Reports", 
+                      desc: "Instantly structure loose text logs, screenshots, and device observations into formal, developer-friendly Jira/Linear tickets.",
+                      label: "Bug Deflector"
+                    },
+                    { 
+                      icon: <PieChart className="w-5 h-5 text-pink-400" />, 
+                      title: "Reduced Missed Scenarios", 
+                      desc: "Unlock intelligent boundary analysis and comprehensive system checks designed by advanced AI criteria models.",
+                      label: "Data Defense"
+                    }
+                  ].map((item, idx) => (
+                    <motion.div 
+                      key={idx}
+                      initial={{ opacity: 0, x: 20 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: idx * 0.1, duration: 0.4 }}
+                      className="flex gap-4 p-5 sm:p-6 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-indigo-500/20 hover:bg-white/[0.04] transition-all duration-300 relative group"
+                    >
+                      <div className="w-12 h-12 rounded-xl bg-white/[0.02] group-hover:bg-indigo-600/10 border border-white/5 group-hover:border-indigo-500/20 flex items-center justify-center shrink-0 transition-all duration-300">
                         {item.icon}
                       </div>
-                      <h5 className="text-lg font-bold text-white mb-2">{item.title}</h5>
-                      <p className="text-slate-300 text-xs leading-relaxed">{item.desc}</p>
-                    </div>
-                  </motion.div>
-                ))}
+                      <div className="space-y-1 pr-16">
+                        <h5 className="text-base font-black text-white group-hover:text-indigo-400 transition-colors">
+                          {item.title}
+                        </h5>
+                        <p className="text-slate-400 text-xs leading-relaxed">
+                          {item.desc}
+                        </p>
+                      </div>
+                      
+                      {/* Premium Tag Badge */}
+                      <span className="absolute top-4 right-4 text-[9px] font-black uppercase tracking-widest text-slate-500 bg-white/5 px-2.5 py-1 rounded-md">
+                        {item.label}
+                      </span>
+                    </motion.div>
+                  ))}
+                </div>
+
               </div>
             </div>
           </div>
@@ -3349,26 +3787,141 @@ Language Instruction: Detect the dominant language of the user input (the requir
                 </div>
               </div>
 
-              <div className="flex flex-col md:flex-row justify-between items-center gap-8 border-t border-white/5 pt-12">
-                <div className="flex items-center gap-3 opacity-60 grayscale hover:grayscale-0 hover:opacity-100 transition-all cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-                  <AppLogo size="sm" theme="dark" />
-                </div>
-                <div className="flex gap-8 text-xs font-bold text-slate-400 uppercase tracking-widest">
-                  <button onClick={() => document.getElementById('tools')?.scrollIntoView({ behavior: 'smooth' })} className="hover:text-blue-400 transition-colors">Tools</button>
-                  <button onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })} className="hover:text-blue-400 transition-colors">How it Works</button>
-                  <button onClick={() => document.getElementById('why-qa')?.scrollIntoView({ behavior: 'smooth' })} className="hover:text-blue-400 transition-colors">Why QA</button>
-                </div>
-                <div className="text-[10px] font-medium text-slate-400 flex items-center gap-2">
-                  <div className="flex -space-x-2">
-                    {[1, 2, 3].map((i) => (
-                      <div key={i} className="w-6 h-6 rounded-full border-2 border-[#020617] bg-slate-800" />
-                    ))}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 border-t border-white/5 pt-16 pb-12">
+                {/* Brand & Mission Column */}
+                <div className="lg:col-span-4 space-y-6">
+                  <div className="flex items-center gap-3 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+                    <AppLogo theme="dark" />
                   </div>
-                  <span>Trusted by 50+ QA Teams</span>
+                  <p className="text-slate-400 text-xs leading-relaxed max-w-sm">
+                    Automating raw, repetitive specification analysis to craft comprehensive, high-coverage scenarios and requirement validation checks.
+                  </p>
+                  
+                  {/* Classy Systems Status Pill */}
+                  <div className="inline-flex items-center gap-2 bg-emerald-500/15 border border-emerald-500/20 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest text-emerald-400">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    All Systems Operational
+                  </div>
+                </div>
+
+                {/* Navigation Links Column */}
+                <div className="lg:col-span-2 space-y-4">
+                  <h6 className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em]">Platform</h6>
+                  <ul className="space-y-2.5 text-xs font-bold text-slate-300">
+                    <li>
+                      <button 
+                        onClick={() => document.getElementById('tools')?.scrollIntoView({ behavior: 'smooth' })} 
+                        className="hover:text-indigo-400 transition-colors cursor-pointer text-left"
+                      >
+                        Tools Section
+                      </button>
+                    </li>
+                    <li>
+                      <button 
+                        onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })} 
+                        className="hover:text-amber-400 transition-colors cursor-pointer text-left"
+                      >
+                        Interactive Guide
+                      </button>
+                    </li>
+                    <li>
+                      <button 
+                        onClick={() => document.getElementById('why-qa')?.scrollIntoView({ behavior: 'smooth' })} 
+                        className="hover:text-pink-400 transition-colors cursor-pointer text-left"
+                      >
+                        Quality Benefits
+                      </button>
+                    </li>
+                    <li>
+                      <button 
+                        onClick={() => document.getElementById('faq')?.scrollIntoView({ behavior: 'smooth' })} 
+                        className="hover:text-emerald-400 transition-colors cursor-pointer text-left"
+                      >
+                        Help Center
+                      </button>
+                    </li>
+                  </ul>
+                </div>
+
+                {/* AI Utilities Column (Direct Routing) */}
+                <div className="lg:col-span-3 space-y-4">
+                  <h6 className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em]">AI Utilities</h6>
+                  <ul className="space-y-2.5 text-xs font-bold text-slate-300">
+                    <li>
+                      <button 
+                        onClick={() => { setAppPage('generator'); setActiveFeature('generator'); }}
+                        className="hover:text-pink-400 transition-colors cursor-pointer text-left flex items-center gap-2"
+                      >
+                        <Zap className="w-3 h-3 text-pink-500 shrink-0" />
+                        Test Case Generator
+                      </button>
+                    </li>
+                    <li>
+                      <button 
+                        onClick={() => { setAppPage('coverage'); setActiveFeature('coverage'); }}
+                        className="hover:text-emerald-400 transition-colors cursor-pointer text-left flex items-center gap-2"
+                      >
+                        <PieChart className="w-3 h-3 text-emerald-500 shrink-0" />
+                        Coverage Analyzer
+                      </button>
+                    </li>
+                    <li>
+                      <button 
+                        onClick={() => setAppPage('bug_report')}
+                        className="hover:text-orange-400 transition-colors cursor-pointer text-left flex items-center gap-2"
+                      >
+                        <Bug className="w-3 h-3 text-orange-500 shrink-0" />
+                        Bug Report Generator
+                      </button>
+                    </li>
+                    <li>
+                      <button 
+                        onClick={() => setAppPage('requirement_checker')}
+                        className="hover:text-violet-400 transition-colors cursor-pointer text-left flex items-center gap-2"
+                      >
+                        <ClipboardCheck className="w-3 h-3 text-violet-500 shrink-0" />
+                        Requirement Quality Checker
+                      </button>
+                    </li>
+                  </ul>
+                </div>
+
+                {/* Trusted Community Column */}
+                <div className="lg:col-span-3 space-y-4">
+                  <h6 className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em]">Trusted Ecosystem</h6>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <div className="flex -space-x-2.5">
+                        <div className="w-7 h-7 rounded-lg border border-[#020617] bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center text-[10px] font-black text-white shadow-sm shadow-[#020617]/50">
+                          QA
+                        </div>
+                        <div className="w-7 h-7 rounded-lg border border-[#020617] bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-[10px] font-black text-white shadow-sm shadow-[#020617]/50">
+                          CO
+                        </div>
+                        <div className="w-7 h-7 rounded-lg border border-[#020617] bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center text-[10px] font-black text-white shadow-sm shadow-[#020617]/50">
+                          AS
+                        </div>
+                        <div className="w-7 h-7 rounded-lg border border-[#020617] bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-[10px] font-black text-white shadow-sm shadow-[#020617]/50">
+                          +
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-extrabold text-slate-300 uppercase tracking-widest">50+ Teams</span>
+                    </div>
+                    <p className="text-slate-400 text-xs leading-relaxed">
+                      Earning the trust of QA Engineers, Product Managers, and Builders worldwide to eliminate test gaps and missed scenarios.
+                    </p>
+                  </div>
                 </div>
               </div>
-              <div className="mt-12 text-center text-[10px] font-bold text-slate-500 uppercase tracking-[0.3em]">
-                &copy; {new Date().getFullYear()} QA Copilot. All rights reserved.
+
+              {/* Bottom attribution info */}
+              <div className="mt-12 pt-8 border-t border-white/5 flex flex-col items-center justify-center gap-2 text-center">
+                <div className="text-[9px] font-bold text-slate-500 uppercase tracking-[0.3em]">
+                  &copy; {new Date().getFullYear()} QA COPILOT. ALL RIGHTS RESERVED.
+                </div>
+                <div className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">
+                  BY TSUZUI
+                </div>
               </div>
             </footer>
           </div>
@@ -3385,8 +3938,8 @@ Language Instruction: Detect the dominant language of the user input (the requir
               <button 
                 onClick={() => { setAppPage('generator'); setActiveFeature('generator'); }}
                 className={cn(
-                  "px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-xl transition-all flex items-center gap-2 cursor-pointer",
-                  appPage === 'generator' ? "bg-pink-600 text-white shadow-lg" : "text-slate-500 dark:text-slate-300 hover:text-slate-700 dark:hover:text-white hover:bg-pink-50/50 dark:hover:bg-pink-950/20"
+                  "px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-xl transition-all flex items-center gap-2 cursor-pointer hover:scale-105 active:scale-95 duration-200",
+                  appPage === 'generator' ? "bg-pink-600 text-white shadow-lg hover:bg-pink-700 shadow-pink-600/20" : "text-slate-500 dark:text-slate-300 hover:text-slate-700 dark:hover:text-white hover:bg-pink-50/50 dark:hover:bg-pink-950/20"
                 )}
               >
                 <Zap className={cn("w-3.5 h-3.5", appPage === 'generator' ? "fill-white text-white" : "fill-none")} />
@@ -3395,8 +3948,8 @@ Language Instruction: Detect the dominant language of the user input (the requir
               <button 
                 onClick={() => { setAppPage('coverage'); setActiveFeature('coverage'); }}
                 className={cn(
-                  "px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-xl transition-all flex items-center gap-2 cursor-pointer",
-                  appPage === 'coverage' ? "bg-emerald-600 text-white shadow-lg" : "text-slate-500 dark:text-slate-300 hover:text-slate-700 dark:hover:text-white hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20"
+                  "px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-xl transition-all flex items-center gap-2 cursor-pointer hover:scale-105 active:scale-95 duration-200",
+                  appPage === 'coverage' ? "bg-emerald-600 text-white shadow-lg hover:bg-emerald-700 shadow-emerald-600/20" : "text-slate-500 dark:text-slate-300 hover:text-slate-700 dark:hover:text-white hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20"
                 )}
               >
                 <PieChart className="w-3.5 h-3.5" />
@@ -3405,8 +3958,8 @@ Language Instruction: Detect the dominant language of the user input (the requir
               <button 
                 onClick={() => setAppPage('bug_report')}
                 className={cn(
-                  "px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-xl transition-all flex items-center gap-2 cursor-pointer",
-                  appPage === 'bug_report' ? "bg-orange-600 text-white shadow-lg" : "text-slate-500 dark:text-slate-300 hover:text-slate-700 dark:hover:text-white hover:bg-orange-50/50 dark:hover:bg-orange-950/20"
+                  "px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-xl transition-all flex items-center gap-2 cursor-pointer hover:scale-105 active:scale-95 duration-200",
+                  appPage === 'bug_report' ? "bg-orange-600 text-white shadow-lg hover:bg-orange-700 shadow-orange-600/20" : "text-slate-500 dark:text-slate-300 hover:text-slate-700 dark:hover:text-white hover:bg-orange-50/50 dark:hover:bg-orange-950/20"
                 )}
               >
                 <Bug className="w-3.5 h-3.5" />
@@ -3415,8 +3968,8 @@ Language Instruction: Detect the dominant language of the user input (the requir
               <button 
                 onClick={() => setAppPage('requirement_checker')}
                 className={cn(
-                  "px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-xl transition-all flex items-center gap-2 cursor-pointer",
-                  appPage === 'requirement_checker' ? "bg-violet-600 text-white shadow-lg" : "text-slate-500 dark:text-slate-300 hover:text-slate-700 dark:hover:text-white hover:bg-violet-50/50 dark:hover:bg-violet-950/20"
+                  "px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-xl transition-all flex items-center gap-2 cursor-pointer hover:scale-105 active:scale-95 duration-200",
+                  appPage === 'requirement_checker' ? "bg-violet-600 text-white shadow-lg hover:bg-violet-700 shadow-violet-600/20" : "text-slate-500 dark:text-slate-300 hover:text-slate-700 dark:hover:text-white hover:bg-violet-50/50 dark:hover:bg-violet-950/20"
                 )}
               >
                 <ClipboardCheck className="w-3.5 h-3.5" />
